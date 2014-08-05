@@ -26,7 +26,25 @@ class ItemController extends Controller
         ]);
     }
 
-    public function store()
+    public function actionInstall()
+    {
+        $items = Yii::$app->request->post('isInstalled');
+        $toInstall = [];
+        $toRemove = [];
+        $installedItems = Item::installedList();
+        foreach ($items as $name => $value) {
+            $installed = isset($installedItems[$name]);
+            if ($value && !$installed) {
+                $toInstall[] = $name . ":";
+            } else if (!$value && $installed){
+                $toRemove[] = $name;
+            }
+        }
+        Item::remove($toRemove);
+        Item::install($toInstall);
+    }
+
+    public function actionError($message)
     {
 
     }
