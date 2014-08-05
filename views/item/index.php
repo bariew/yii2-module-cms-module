@@ -9,7 +9,7 @@ use \yii\widgets\ActiveForm;
  * @var bariew\moduleModule\models\ItemSearch $searchModel
  */
 
-$this->title = Yii::t('modules/module', 'CMS Modules');
+$this->title = 'CMS Modules';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="module-index">

@@ -21,7 +21,7 @@ use yii\widgets\ActiveForm;
     <?php echo $form->field($model, 'type')->dropDownList($model::typeList()) ?>
 
     <div class="form-group">
-        <?php echo Html::submitButton($model->isNewRecord ? Yii::t('modules/module', 'Create') : Yii::t('modules/module', 'Update'), ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+        <?php echo Html::submitButton('Save', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

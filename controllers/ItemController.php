@@ -28,7 +28,7 @@ class ItemController extends Controller
 
     public function actionInstall()
     {
-        $items = Yii::$app->request->post('isInstalled');
+        $items = Yii::$app->request->post('isInstalled') ? : [];
         $toInstall = [];
         $toRemove = [];
         $installedItems = Item::installedList();
@@ -40,8 +40,12 @@ class ItemController extends Controller
                 $toRemove[] = $name;
             }
         }
+//        print_r($toRemove);
+//        print_r($toInstall);exit;
         Item::remove($toRemove);
         Item::install($toInstall);
+        Yii::$app->session->setFlash('info', 'Nothing to install/remove');
+        $this->redirect(['index']);
     }
 
     public function actionError($message)

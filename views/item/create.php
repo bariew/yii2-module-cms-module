@@ -7,10 +7,8 @@ use yii\helpers\Html;
  * @var bariew\moduleModule\models\Item $model
  */
 
-$this->title = Yii::t('modules/module', 'Create {modelClass}', [
-  'modelClass' => 'Item',
-]);
-$this->params['breadcrumbs'][] = ['label' => Yii::t('modules/module', 'Items'), 'url' => ['index']];
+$this->title =  'Create Item';
+$this->params['breadcrumbs'][] = ['label' => 'Items', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="module-create">
