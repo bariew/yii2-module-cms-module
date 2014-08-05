@@ -11,11 +11,14 @@
         }
     ],
     "require"   : {
-        "knplabs/packagist-api": "1.*@dev"
+        "bariew/yii2-module-migration-controller"   : "1.*"
     },
     "autoload": {
         "psr-4": {
             "bariew\\moduleModule\\": ""
         }
-    }  
+    },
+    "extra": {
+        "bootstrap": "bariew\\moduleModule\\ModuleBootstrap"
+    }
 }
