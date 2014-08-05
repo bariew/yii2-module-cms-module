@@ -4,33 +4,39 @@ namespace bariew\moduleModule\models;
 
 use bariew\moduleModule\HtmlOutput;
 use Codeception\Platform\SimpleOutput;
-use Composer\Console\HtmlOutputFormatter;
-use Composer\Factory;
 use SebastianBergmann\Exporter\Exception;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\StreamOutput;
-use Symfony\Component\Console\Tests\Fixtures\DummyOutput;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use Composer\Console\Application;
-use Composer\Command\RequireCommand;
 use Symfony\Component\Console\Input\ArrayInput;
-use yii\web\HttpException;
 
 class Item extends Model
 {
     public $name;
     public $downloads;
+    public $url;
+    public $favers;
+    public $repository;
 
     public function rules()
     {
         return [
-            [['name'], 'string'],
-            [['downloads'], 'integer']
+            [['name', 'url', 'repository'], 'string'],
+            [['downloads', 'favers'], 'integer'],
+            [['name'], 'moduleNameValidation']
         ];
+    }
+
+    public function moduleNameValidation($attribute)
+    {
+        if (!preg_match('/yii2-.*-cms-module/', $this->$attribute)) {
+            $this->addError($attribute, "Not CMS module");
+        }
     }
 
     public static function composerConfig()
@@ -45,7 +51,6 @@ class Item extends Model
         return Yii::$app->extensions;
     }
 
-
     public function getIsInstalled()
     {
         return isset(self::installedList()[$this->name]);
@@ -56,6 +61,9 @@ class Item extends Model
         $items = json_decode(file_get_contents("https://packagist.org/search.json?q=yii2-cms-module"), true)["results"];
         foreach ($items as $key => $attributes) {
             $items[$key] = new self(compact('attributes'));
+            if (!$items[$key]->validate()) {
+                unset($items[$key]);
+            }
         }
         return new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
     }
@@ -97,7 +105,8 @@ class Item extends Model
             }
         }
     }
-    public static function runComposer(array $command)
+
+    public static function runComposer(array $command, $render = true)
     {
         self::checkRequirements();
         chdir(Yii::$app->basePath);
@@ -111,16 +120,27 @@ class Item extends Model
                 $function();
             }
         }
+        $output = $render ? self::htmlOutput() : null;
+        return (new Application())->run(new ArrayInput($command), $output);
+    }
+
+    public static function htmlOutput()
+    {
         $output = new HtmlOutput(fopen('php://stdout', 'w'));
         register_shutdown_function(function () use ($output) {
+            $success = true;
             foreach ($output->messages as $key => $message) {
-               // if (!preg_match())
+                if (preg_match('/Exception/', $message)) {
+                    $success = false;
+                    Yii::$app->session->setFlash('error', $output->messages[$key+1]);
+                    break;
+                }
             }
-            //Yii::$app->controller->redirect(['index']);
-            print_r($output->messages);
+            if ($success) {
+                Yii::$app->session->setFlash('success', "Successfully installed.");
+            }
+            echo Yii::$app->controller->actionIndex();
         });
-        (new Application())->run(new ArrayInput($command), $output);
-
         return $output;
     }
 }

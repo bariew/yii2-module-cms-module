@@ -46,7 +46,8 @@ class ItemController extends Controller
 
     public function actionError($message)
     {
-
+        echo $message;
+        return $this->render('error', compact('message'));
     }
 
 }
