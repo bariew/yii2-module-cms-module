@@ -29,12 +29,12 @@ class ModuleBootstrap implements BootstrapInterface
      */
     public function bootstrap($app)
     {
-        if (!$app instanceof Application) {
-            return;
+        if ($app instanceof Application) {
+            $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
+                $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
+            });
         }
-        $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
-            $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
-        });
+
         $this->app = $app;
         $this->attachModules()
             ->attachMigrations();
