@@ -20,6 +20,7 @@
         }
     },
     "extra": {
+        "class": "bariew\\moduleModule\\Plugin",
         "bootstrap": "bariew\\moduleModule\\ModuleBootstrap"
     }
 }
