@@ -11,6 +11,7 @@
         }
     ],
     "require"   : {
+        "composer/composer": "1.0.*@dev",
         "bariew/yii2-module-migration-controller"   : "1.*"
     },
     "autoload": {
