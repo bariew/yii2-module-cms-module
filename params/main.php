@@ -1,7 +1,11 @@
 <?php  
+
 return [
     'menu'  => [
-        'label'    => 'Modules',
-        'url' => ['/module/item/index']
+        'label'    => 'Settings',
+        'items' => [
+            ['label' => 'Modules', 'url' => ['/module/item/index']],
+            ['label' => 'Admin menu', 'url' => ['/module/menu/update']]
+        ]
     ]
 ];

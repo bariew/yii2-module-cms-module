@@ -7,7 +7,8 @@
 
 namespace bariew\moduleModule;
 
-use bariew\moduleModule\widgets\Menu;
+use bariew\moduleModule\models\Menu;
+use bariew\moduleModule\widgets\MenuWidget;
 use Yii;
 use yii\base\BootstrapInterface;
 use \yii\web\Application;
@@ -83,9 +84,10 @@ class ModuleBootstrap implements BootstrapInterface
 
     public function renderMenu(Event $event)
     {
-        if (Yii::$app->getRequest()->getIsAjax()) {
+        if (Yii::$app->getRequest()->getIsAjax() || !Menu::isActive()) {
             return;
         }
+
         NavBar::begin([
             'brandLabel' => 'Home',
             'brandUrl' => Yii::$app->homeUrl,
@@ -96,7 +98,7 @@ class ModuleBootstrap implements BootstrapInterface
         if (\Yii::$app->has('i18n') && isset(\Yii::$app->i18n->widget)) {
             echo "<div class='btn pull-right'>".Yii::$app->i18n->widget."</div>";
         }
-        echo Menu::widget([
+        echo MenuWidget::widget([
             'options' => ['class' => 'navbar-nav navbar-right']
         ]);
 
