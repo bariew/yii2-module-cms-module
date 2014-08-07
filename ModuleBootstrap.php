@@ -11,6 +11,7 @@ use bariew\moduleModule\models\Menu;
 use bariew\moduleModule\widgets\MenuWidget;
 use Yii;
 use yii\base\BootstrapInterface;
+use yii\composer\Installer;
 use \yii\web\Application;
 use yii\base\Event;
 use yii\bootstrap\NavBar;
@@ -41,6 +42,13 @@ class ModuleBootstrap implements BootstrapInterface
             ->attachMigrations();
         
         return true;
+    }
+
+    public static function postInstall(\Composer\Script\Event $event)
+    {
+        $installedPackage = $event->getOperation()->getPackage();
+        $installer = new ComposerInstaller($event->getIO(), $event->getComposer());
+        $installer->addModulePackage($installedPackage);
     }
 
     /**

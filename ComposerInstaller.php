@@ -14,9 +14,8 @@ use yii\composer\Installer;
 
 class ComposerInstaller extends Installer
 {
-    public function addModulePackage()
+    public function addModulePackage($package)
     {
-        $package = new Package();
         return parent::addPackage($package);
     }
 } 

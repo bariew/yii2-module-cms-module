@@ -19,8 +19,12 @@
             "bariew\\moduleModule\\": ""
         }
     },
+    "scripts": {
+        "post-package-install": [
+            "bariew\\moduleModule\\ModuleBootstrap::postInstall"
+        ]
+    },
     "extra": {
-        "class": "bariew\\moduleModule\\Plugin",
         "bootstrap": "bariew\\moduleModule\\ModuleBootstrap"
     }
 }
