@@ -46,6 +46,7 @@ class ModuleBootstrap implements BootstrapInterface
 
     public static function postInstall(\Composer\Script\Event $event)
     {
+        echo "\n\n Trying to register module \n\n";
         $installedPackage = $event->getOperation()->getPackage();
         $installer = new ComposerInstaller($event->getIO(), $event->getComposer());
         $installer->addModulePackage($installedPackage);

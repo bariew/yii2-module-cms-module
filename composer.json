@@ -22,6 +22,9 @@
     "scripts": {
         "post-package-install": [
             "bariew\\moduleModule\\ModuleBootstrap::postInstall"
+        ],
+        "post-create-project-cmd" : [
+            "bariew\\moduleModule\\ModuleBootstrap::postInstall"
         ]
     },
     "extra": {
