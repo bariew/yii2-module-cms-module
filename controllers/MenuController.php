@@ -3,6 +3,7 @@
 namespace bariew\moduleModule\controllers;
 
 use bariew\moduleModule\models\Menu;
+use bariew\moduleModule\Plugin;
 use Yii;
 use yii\web\Controller;
 
@@ -22,5 +23,10 @@ class MenuController extends Controller
             Yii::$app->session->setFlash('success', 'Saved');
         }
         return $this->render('update', compact('model'));
+    }
+
+    public function actionTest()
+    {
+        Plugin::test();
     }
 }
