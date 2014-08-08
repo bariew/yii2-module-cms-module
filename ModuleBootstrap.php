@@ -44,14 +44,6 @@ class ModuleBootstrap implements BootstrapInterface
         return true;
     }
 
-    public static function postInstall(\Composer\Script\Event $event)
-    {
-        echo "\n\n Trying to register module \n\n";
-        $installedPackage = $event->getOperation()->getPackage();
-        $installer = new ComposerInstaller($event->getIO(), $event->getComposer());
-        $installer->addModulePackage($installedPackage);
-    }
-
     /**
      * attaches modules to application from external 
      * composer installed extensions sources
