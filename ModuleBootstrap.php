@@ -115,12 +115,14 @@ class ModuleBootstrap implements BootstrapInterface
      */
     public static function setPermission($event)
     {
-        $options = array_merge([
-            self::EXTRA_WRITABLE => [],
-            self::EXTRA_EXECUTABLE => [],
-        ], $event->getComposer()->getPackage()->getExtra());
+        $paths = [
+            "vendor",
+            "vendor/yiisoft/extensions.php",
+            "composer.json",
+            "vendor/composer/installed.json"
+        ];
 
-        foreach ((array) $options[self::EXTRA_WRITABLE] as $path) {
+        foreach ($paths as $path) {
             echo "Setting writable: $path ...\n";
             self::createPath($path);
             self::chmodR($path);
@@ -152,16 +154,15 @@ class ModuleBootstrap implements BootstrapInterface
 
     public static function chmodR($path) {
         if (is_file($path)) {
-            return chmod($path, 0644);
+            return chmod($path, 0777);
         }
         $dp = opendir($path);
-        while($File = readdir($dp)) {
-            if($File != "." AND $File != "..") {
-                if(is_dir($File)){
-                    chmod($File, 0775);
-                    chmod_r($path."/".$File);
-                }
+        while($file = readdir($dp)) {
+            if(in_array($file, ['.', '..']) || !is_dir($file)) {
+                continue;
             }
+            chmod($file, 0777);
+            chmod_r($path."/".$file);
         }
         closedir($dp);
     }
