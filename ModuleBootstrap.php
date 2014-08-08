@@ -106,4 +106,47 @@ class ModuleBootstrap implements BootstrapInterface
         NavBar::end();
     }
 
+
+    const EXTRA_WRITABLE = 'writable';
+    const EXTRA_EXECUTABLE = 'executable';
+    /**
+     * Sets the correct permission for the files and directories listed in the extra section.
+     * @param CommandEvent $event
+     */
+    public static function setPermission($event)
+    {
+        $options = array_merge([
+            self::EXTRA_WRITABLE => [],
+            self::EXTRA_EXECUTABLE => [],
+        ], $event->getComposer()->getPackage()->getExtra());
+
+        foreach ((array) $options[self::EXTRA_WRITABLE] as $path) {
+            echo "Setting writable: $path ...";
+            if (!file_exists($path)) {
+                if (preg_match('/.*\.\w+$/', $path)) { // is file
+                    touch($path);
+                } else {
+                    mkdir($path);
+                }
+            }
+            chmod($path, 0777);
+        }
+    }
+
+    public static function test()
+    {
+        $paths = json_decode(file_get_contents(Yii::getAlias('@app/composer.json')), true)['extra']['writable'];
+        chdir(Yii::$app->basePath);
+        foreach ($paths as $path) {
+            echo "Setting writable: $path ...";
+            if (!file_exists($path)) {
+                if (preg_match('/.*\.\w+$/', $path)) { // is file
+                    touch($path);
+                } else {
+                    mkdir($path);
+                }
+            }
+            chmod($path, 0777);
+        }
+    }
 }
