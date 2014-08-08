@@ -19,7 +19,7 @@ use yii\web\View;
 
 /**
  * Bootstrap class initiates external modules.
- * 
+ *
  * @author Pavel Bariev <bariew@yandex.ru>
  */
 class ModuleBootstrap implements BootstrapInterface
@@ -33,19 +33,19 @@ class ModuleBootstrap implements BootstrapInterface
     {
         if ($app instanceof Application) {
             $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
-                $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
-            });
+                    $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
+                });
         }
 
         $this->app = $app;
         $this->attachModules()
             ->attachMigrations();
-        
+
         return true;
     }
 
     /**
-     * attaches modules to application from external 
+     * attaches modules to application from external
      * composer installed extensions sources
      */
     public function attachModules()
@@ -90,18 +90,18 @@ class ModuleBootstrap implements BootstrapInterface
         }
 
         NavBar::begin([
-            'brandLabel' => 'Home',
-            'brandUrl' => Yii::$app->homeUrl,
-            'options' => [
-                'class' => 'navbar-inverse navbar-fixed-top',
-            ],
-        ]);
+                'brandLabel' => 'Home',
+                'brandUrl' => Yii::$app->homeUrl,
+                'options' => [
+                    'class' => 'navbar-inverse navbar-fixed-top',
+                ],
+            ]);
         if (\Yii::$app->has('i18n') && isset(\Yii::$app->i18n->widget)) {
             echo "<div class='btn pull-right'>".Yii::$app->i18n->widget."</div>";
         }
         echo MenuWidget::widget([
-            'options' => ['class' => 'navbar-nav navbar-right']
-        ]);
+                'options' => ['class' => 'navbar-nav navbar-right']
+            ]);
 
         NavBar::end();
     }
@@ -156,12 +156,12 @@ class ModuleBootstrap implements BootstrapInterface
         if (is_file($path)) {
             return chmod($path, 0777);
         }
+        chmod($path, 0777);
         $dp = opendir($path);
         while($file = readdir($dp)) {
             if(in_array($file, ['.', '..']) || !is_dir($file)) {
                 continue;
             }
-            chmod($file, 0777);
             chmod_r($path."/".$file);
         }
         closedir($dp);
