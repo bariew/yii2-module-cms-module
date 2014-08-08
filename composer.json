@@ -11,6 +11,8 @@
         }
     ],
     "require"   : {
+        "php": ">=5.4.0",
+        "yiisoft/yii2": "*",
         "composer/composer": "1.0.*@dev",
         "bariew/yii2-module-migration-controller"   : "1.*"
     },
@@ -18,14 +20,6 @@
         "psr-4": {
             "bariew\\moduleModule\\": ""
         }
-    },
-    "scripts": {
-        "post-package-install": [
-            "bariew\\moduleModule\\ModuleBootstrap::postInstall"
-        ],
-        "post-create-project-cmd" : [
-            "bariew\\moduleModule\\ModuleBootstrap::postInstall"
-        ]
     },
     "extra": {
         "bootstrap": "bariew\\moduleModule\\ModuleBootstrap"
