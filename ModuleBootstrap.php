@@ -24,6 +24,12 @@ use yii\web\View;
  */
 class ModuleBootstrap implements BootstrapInterface
 {
+    protected static $paths = [
+        "vendor",
+        "vendor/yiisoft/extensions.php",
+        "composer.json",
+        "vendor/composer/installed.json"
+    ];
 
     protected $app;
     /**
@@ -31,10 +37,11 @@ class ModuleBootstrap implements BootstrapInterface
      */
     public function bootstrap($app)
     {
+        self::test();
         if ($app instanceof Application) {
             $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
-                    $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
-                });
+                $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
+            });
         }
 
         $this->app = $app;
@@ -115,14 +122,7 @@ class ModuleBootstrap implements BootstrapInterface
      */
     public static function setPermission($event)
     {
-        $paths = [
-            "vendor",
-            "vendor/yiisoft/extensions.php",
-            "composer.json",
-            "vendor/composer/installed.json"
-        ];
-
-        foreach ($paths as $path) {
+        foreach (self::$paths as $path) {
             echo "Setting writable: $path ...\n";
             self::createPath($path);
             self::chmodR($path);
@@ -131,13 +131,12 @@ class ModuleBootstrap implements BootstrapInterface
 
     public static function test()
     {
-        $paths = json_decode(file_get_contents(Yii::getAlias('@app/composer.json')), true)['extra']['writable'];
-        chdir(Yii::$app->basePath);
-        foreach ($paths as $path) {
-            echo "Setting writable: $path ...\n";
+        foreach (self::$paths as $path) {
+            $path = Yii::$app->basePath . DIRECTORY_SEPARATOR . $path;
             self::createPath($path);
             self::chmodR($path);
         }
+        exit;
     }
 
     public static function createPath($path)
@@ -157,13 +156,14 @@ class ModuleBootstrap implements BootstrapInterface
             return chmod($path, 0777);
         }
         chmod($path, 0777);
-        $dp = opendir($path);
-        while($file = readdir($dp)) {
-            if(in_array($file, ['.', '..']) || !is_dir($file)) {
+        foreach (scandir($path) as $file) {
+            if(in_array($file, ['.', '..'])) {
                 continue;
             }
-            chmod_r($path."/".$file);
+            $subpath = $path . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($subpath)) {
+                self::chmodR($subpath);
+            }
         }
-        closedir($dp);
     }
 }
