@@ -121,15 +121,9 @@ class ModuleBootstrap implements BootstrapInterface
         ], $event->getComposer()->getPackage()->getExtra());
 
         foreach ((array) $options[self::EXTRA_WRITABLE] as $path) {
-            echo "Setting writable: $path ...";
-            if (!file_exists($path)) {
-                if (preg_match('/.*\.\w+$/', $path)) { // is file
-                    touch($path);
-                } else {
-                    mkdir($path);
-                }
-            }
-            chmod($path, 0777);
+            echo "Setting writable: $path ...\n";
+            self::createPath($path);
+            self::chmodR($path);
         }
     }
 
@@ -138,15 +132,37 @@ class ModuleBootstrap implements BootstrapInterface
         $paths = json_decode(file_get_contents(Yii::getAlias('@app/composer.json')), true)['extra']['writable'];
         chdir(Yii::$app->basePath);
         foreach ($paths as $path) {
-            echo "Setting writable: $path ...";
-            if (!file_exists($path)) {
-                if (preg_match('/.*\.\w+$/', $path)) { // is file
-                    touch($path);
-                } else {
-                    mkdir($path);
+            echo "Setting writable: $path ...\n";
+            self::createPath($path);
+            self::chmodR($path);
+        }
+    }
+
+    public static function createPath($path)
+    {
+        if (file_exists($path)) {
+            return;
+        }
+        if (preg_match('/.*\.\w+$/', $path)) {
+            touch($path);
+        } else {
+            mkdir($path);
+        }
+    }
+
+    public static function chmodR($path) {
+        if (is_file($path)) {
+            return chmod($path, 0644);
+        }
+        $dp = opendir($path);
+        while($File = readdir($dp)) {
+            if($File != "." AND $File != "..") {
+                if(is_dir($File)){
+                    chmod($File, 0775);
+                    chmod_r($path."/".$File);
                 }
             }
-            chmod($path, 0777);
         }
+        closedir($dp);
     }
 }
