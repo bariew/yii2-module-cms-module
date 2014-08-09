@@ -26,9 +26,8 @@ class ModuleBootstrap implements BootstrapInterface
 {
     protected static $paths = [
         "vendor",
-        "vendor/yiisoft/extensions.php",
         "composer.json",
-        "vendor/composer/installed.json"
+        "composer.lock"
     ];
 
     protected $app;
@@ -152,18 +151,16 @@ class ModuleBootstrap implements BootstrapInterface
     }
 
     public static function chmodR($path) {
-        if (is_file($path)) {
-            return chmod($path, 0777);
-        }
         chmod($path, 0777);
+        if (is_file($path)) {
+            return;
+        }
         foreach (scandir($path) as $file) {
             if(in_array($file, ['.', '..'])) {
                 continue;
             }
             $subpath = $path . DIRECTORY_SEPARATOR . $file;
-            if (is_dir($subpath)) {
-                self::chmodR($subpath);
-            }
+            self::chmodR($subpath);
         }
     }
 }
