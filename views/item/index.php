@@ -21,6 +21,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'columns' => [
             'name',
+            'description',
             'downloads',
             [
                 'label' => 'Installed',

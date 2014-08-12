@@ -30,6 +30,5 @@ class MenuWidget extends Nav
         }
         ksort($result);
         $this->items = array_values($result);
-        //print_r($this->items);exit;
     }
 }

@@ -30,7 +30,7 @@ class ModuleBootstrap implements BootstrapInterface
         "composer.lock"
     ];
 
-    protected $app;
+    public $app;
     /**
      * @inheritdoc
      */

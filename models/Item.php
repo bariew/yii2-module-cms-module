@@ -3,11 +3,9 @@
 namespace bariew\moduleModule\models;
 
 use bariew\moduleModule\HtmlOutput;
+use bariew\moduleModule\ModuleBootstrap;
 use Codeception\Platform\SimpleOutput;
 use SebastianBergmann\Exporter\Exception;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Console\Output\StreamOutput;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\base\Model;
@@ -18,15 +16,18 @@ use Symfony\Component\Console\Input\ArrayInput;
 class Item extends Model
 {
     public $name;
+    public $description;
     public $downloads;
     public $url;
     public $favers;
     public $repository;
 
+    public static $extConfigFile = '@vendor/yiisoft/extensions.php';
+
     public function rules()
     {
         return [
-            [['name', 'url', 'repository'], 'string'],
+            [['name', 'url', 'repository', 'description'], 'string'],
             [['downloads', 'favers'], 'integer'],
             [['name'], 'moduleNameValidation']
         ];
@@ -42,8 +43,8 @@ class Item extends Model
     public static function composerConfig()
     {
         return json_decode(file_get_contents(
-            Yii::$app->basePath . DIRECTORY_SEPARATOR . 'composer.json'
-        ), true);
+                Yii::$app->basePath . DIRECTORY_SEPARATOR . 'composer.json'
+            ), true);
     }
 
     public static function installedList()
@@ -138,7 +139,10 @@ class Item extends Model
                     break;
                 }
             }
-
+            Yii::$app->extensions = require Yii::getAlias(self::$extConfigFile);
+            $bootstrap = new ModuleBootstrap();
+            $bootstrap->app = Yii::$app;
+            $bootstrap->attachModules();
             if ($success) {
                 Yii::$app->session->setFlash('success', "Ready.");
             }
