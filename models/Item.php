@@ -11,7 +11,10 @@ use yii\base\InvalidConfigException;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use Composer\Console\Application;
+use yii\console\Application as ConsoleApplication;
 use Symfony\Component\Console\Input\ArrayInput;
+use yii\console\controllers\MigrateController;
+use yii\helpers\BaseFileHelper;
 
 class Item extends Model
 {
@@ -24,6 +27,8 @@ class Item extends Model
 
     public static $extConfigFile = '@vendor/yiisoft/extensions.php';
 
+    public static $migrationCommands = [];
+
     public function rules()
     {
         return [
@@ -35,7 +40,7 @@ class Item extends Model
 
     public function moduleNameValidation($attribute)
     {
-        if (!preg_match('/yii2-.*-cms-module/', $this->$attribute)) {
+        if (!self::getModuleName($this->$attribute)) {
             $this->addError($attribute, "Not CMS module");
         }
     }
@@ -43,8 +48,8 @@ class Item extends Model
     public static function composerConfig()
     {
         return json_decode(file_get_contents(
-                Yii::$app->basePath . DIRECTORY_SEPARATOR . 'composer.json'
-            ), true);
+            Yii::$app->basePath . DIRECTORY_SEPARATOR . 'composer.json'
+        ), true);
     }
 
     public static function installedList()
@@ -55,6 +60,12 @@ class Item extends Model
     public function getIsInstalled()
     {
         return isset(self::installedList()[$this->name]);
+    }
+
+    public static function getModuleName($name)
+    {
+        return  (preg_match('/yii2-(.*)-cms-module/', $name, $matches))
+            ? $matches[1] : null;
     }
 
     public static function search()
@@ -75,6 +86,12 @@ class Item extends Model
         if (!$names) {
             return true;
         }
+        foreach ($names as $name) {
+            if (!$module = self::getModuleName($name)) {
+                continue;
+            }
+            self::$migrationCommands[] = ['module-up', [$module]];
+        }
         return self::runComposer([
             'command' => 'require',
             'packages' => $names
@@ -86,6 +103,19 @@ class Item extends Model
         if (!$names) {
             return true;
         }
+        foreach ($names as $name) {
+            if (!$moduleName = self::getModuleName($name)) {
+                continue;
+            }
+            if(!$module = Yii::$app->getModule($moduleName)) {
+                continue;
+            }
+            if (method_exists($module, 'uninstall')) {
+                call_user_func([$module, 'uninstall']);
+            }
+            self::$migrationCommands[] = ['module-down', [$moduleName]];
+        }
+        self::migrate(self::$migrationCommands);
         return self::runComposer([
             'command' => 'remove',
             'packages' => $names
@@ -144,10 +174,45 @@ class Item extends Model
             $bootstrap->app = Yii::$app;
             $bootstrap->attachModules();
             if ($success) {
+                self::migrate(self::$migrationCommands);
                 Yii::$app->session->setFlash('success', "Ready.");
             }
             echo Yii::$app->controller->actionIndex();
         });
         return $output;
+    }
+
+    protected static function migrate(&$actions)
+    {
+        if (!$actions) {
+            return true;
+        }
+        $webApp = Yii::$app;
+        try {
+            $consoleConfig = require_once Yii::getAlias('@app/config/console.php');
+            Yii::$app = new ConsoleApplication($consoleConfig);
+            /**
+             * @var MigrateController $controller
+             */
+            $controller =  Yii::$app->createController('migrate')[0];
+            $controller->interactive = false;
+            error_reporting(E_ALL);
+            ini_set('display_errors', '1');
+            defined('YII_DEBUG') or define('YII_DEBUG', true);
+            defined('YII_ENV') or define('YII_ENV', 'dev');
+            defined('STDOUT') or define ('STDOUT', 'php://stdout');
+            foreach ($actions as $action) {
+                $controller->runAction($action[0], $action[1]);
+            }
+            Yii::$app->response->clearOutputBuffers();
+        } catch (\Exception $e) {
+            Yii::$app = $webApp;
+            echo $e->getMessage() . "\n\n" . $e->getTraceAsString();
+            Yii::$app->session->setFlash('error', $e->getMessage());
+            return false;
+        }
+        $actions = [];
+        Yii::$app = $webApp;
+        return true;
     }
 }

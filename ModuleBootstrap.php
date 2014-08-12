@@ -95,12 +95,12 @@ class ModuleBootstrap implements BootstrapInterface
         }
 
         NavBar::begin([
-                'brandLabel' => 'Home',
-                'brandUrl' => Yii::$app->homeUrl,
-                'options' => [
-                    'class' => 'navbar-inverse navbar-fixed-top',
-                ],
-            ]);
+            'brandLabel' => 'Home',
+            'brandUrl' => Yii::$app->homeUrl,
+            'options' => [
+                'class' => 'navbar-inverse navbar-fixed-top',
+            ],
+        ]);
         if (\Yii::$app->has('i18n') && isset(\Yii::$app->i18n->widget)) {
             echo "<div class='btn pull-right'>".Yii::$app->i18n->widget."</div>";
         }
