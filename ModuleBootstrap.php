@@ -27,7 +27,9 @@ class ModuleBootstrap implements BootstrapInterface
     protected static $paths = [
         "vendor",
         "vendor/yiisoft/extensions.php",
+        "vendor/composer/autoload_namespaces.php",
         "composer.json",
+        "composer.lock",
         "vendor/composer/installed.json"
     ];
 
@@ -37,7 +39,6 @@ class ModuleBootstrap implements BootstrapInterface
      */
     public function bootstrap($app)
     {
-        self::test();
         if ($app instanceof Application) {
             $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
                 $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
