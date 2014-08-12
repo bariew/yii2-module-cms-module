@@ -121,6 +121,7 @@ class Item extends Model
             }
         }
         $output = $render ? self::htmlOutput() : null;
+
         return (new Application())->run(new ArrayInput($command), $output);
     }
 
@@ -130,14 +131,16 @@ class Item extends Model
         register_shutdown_function(function () use ($output) {
             $success = true;
             foreach ($output->messages as $key => $message) {
+                Yii::$app->session->setFlash('info', $message);
                 if (preg_match('/Exception/', $message)) {
                     $success = false;
                     Yii::$app->session->setFlash('error', $output->messages[$key+1]);
                     break;
                 }
             }
+
             if ($success) {
-                Yii::$app->session->setFlash('success', "Successfully installed.");
+                Yii::$app->session->setFlash('success', "Ready.");
             }
             echo Yii::$app->controller->actionIndex();
         });

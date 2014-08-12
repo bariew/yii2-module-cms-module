@@ -40,12 +40,10 @@ class ItemController extends Controller
                 $toRemove[] = $name;
             }
         }
-//        print_r($toRemove);
-//        print_r($toInstall);exit;
         Item::remove($toRemove);
         Item::install($toInstall);
         Yii::$app->session->setFlash('info', 'Nothing to install/remove');
-        $this->redirect(['index']);
+       return $this->runAction('index');
     }
 
     public function actionError($message)
