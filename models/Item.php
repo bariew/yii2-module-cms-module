@@ -160,14 +160,19 @@ class Item extends Model
     {
         $output = new HtmlOutput(fopen('php://stdout', 'w'));
         register_shutdown_function(function () use ($output) {
+           // print_r($output->messages);exit;
             $success = true;
             foreach ($output->messages as $key => $message) {
-                Yii::$app->session->setFlash('info', $message);
                 if (preg_match('/Exception/', $message)) {
                     $success = false;
                     Yii::$app->session->setFlash('error', $output->messages[$key+1]);
                     break;
+                } elseif (preg_match('/Problem.*/', $message)) {
+                    $success = false;
+                    Yii::$app->session->setFlash('error', $message);
+                    break;
                 }
+                Yii::$app->session->setFlash('info', $message);
             }
             Yii::$app->extensions = require Yii::getAlias(self::$extConfigFile);
             $bootstrap = new ModuleBootstrap();

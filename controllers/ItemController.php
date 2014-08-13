@@ -35,7 +35,7 @@ class ItemController extends Controller
         foreach ($items as $name => $value) {
             $installed = isset($installedItems[$name]);
             if ($value && !$installed) {
-                $toInstall[] = $name . ":*";
+                $toInstall[] = $name . ":dev-master";
             } else if (!$value && $installed){
                 $toRemove[] = $name;
             }
