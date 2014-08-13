@@ -90,7 +90,7 @@ class Item extends Model
             if (!$moduleName = self::getModuleName($name)) {
                 continue;
             }
-            if(!$module = Yii::$app->getModule($moduleName)) {
+            if($module = Yii::$app->getModule($moduleName)) {
                 continue;
             }
             self::$migrationCommands[] = ['module-up', [$moduleName]];
