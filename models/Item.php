@@ -87,10 +87,13 @@ class Item extends Model
             return true;
         }
         foreach ($names as $name) {
-            if (!$module = self::getModuleName($name)) {
+            if (!$moduleName = self::getModuleName($name)) {
                 continue;
             }
-            self::$migrationCommands[] = ['module-up', [$module]];
+            if(!$module = Yii::$app->getModule($moduleName)) {
+                continue;
+            }
+            self::$migrationCommands[] = ['module-up', [$moduleName]];
         }
         return self::runComposer([
             'command' => 'require',
@@ -187,7 +190,7 @@ class Item extends Model
         return $output;
     }
 
-    protected static function migrate(&$actions)
+    public static function migrate(&$actions)
     {
         if (!$actions) {
             return true;

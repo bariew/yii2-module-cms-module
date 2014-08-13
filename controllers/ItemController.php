@@ -52,4 +52,13 @@ class ItemController extends Controller
         return $this->render('error', compact('message'));
     }
 
+    public function actionMigrate()
+    {
+        $actions = [['up', ['all']]];
+        Item::migrate($actions);
+        Yii::$app->session->setFlash('success', 'Success');
+        return $this->runAction('index');
+
+    }
+
 }

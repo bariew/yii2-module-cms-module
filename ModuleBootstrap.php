@@ -101,9 +101,9 @@ class ModuleBootstrap implements BootstrapInterface
                 'class' => 'navbar-inverse navbar-fixed-top',
             ],
         ]);
-        if (\Yii::$app->has('i18n') && isset(\Yii::$app->i18n->widget)) {
-            echo "<div class='btn pull-right'>".Yii::$app->i18n->widget."</div>";
-        }
+//        if (\Yii::$app->has('i18n') && isset(\Yii::$app->i18n->widget)) {
+//            echo "<div class='btn pull-right'>".Yii::$app->i18n->widget."</div>";
+//        }
         echo MenuWidget::widget([
             'options' => ['class' => 'navbar-nav navbar-right']
         ]);

@@ -35,5 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]); ?>
     <?= Html::submitButton("Save", ['class' => 'btn btn-primary']); ?>
+    <?= Html::a("Migrate all", ["migrate"], ['class' => 'btn btn-success']); ?>
+
     <?php ActiveForm::end(); ?>
 </div>
