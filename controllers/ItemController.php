@@ -2,7 +2,9 @@
 
 namespace bariew\moduleModule\controllers;
 
+use bariew\configModule\models\Params;
 use bariew\moduleModule\models\Item;
+use bariew\moduleModule\models\Param;
 use Yii;
 use yii\web\Controller;
 
@@ -18,7 +20,7 @@ class ItemController extends Controller
     public function actionIndex()
     {
         $searchModel = new Item();
-        $dataProvider = $searchModel->search();
+        $dataProvider = $searchModel::findAll();
 
         return $this->render('index', [
             'dataProvider' => $dataProvider,
@@ -42,8 +44,8 @@ class ItemController extends Controller
         }
         Item::remove($toRemove);
         Item::install($toInstall);
-        Yii::$app->session->setFlash('info', 'Nothing to install/remove');
-       return $this->runAction('index');
+        Yii::$app->session->setFlash('info', Yii::t('modules/module', 'Nothing to install/remove'));
+        return $this->runAction('index');
     }
 
     public function actionError($message)
@@ -56,9 +58,18 @@ class ItemController extends Controller
     {
         $actions = [['up', ['all']]];
         Item::migrate($actions);
-        Yii::$app->session->setFlash('success', 'Success');
+        Yii::$app->session->setFlash('success', Yii::t('modules/module', 'Successful migration!'));
         return $this->runAction('index');
 
+    }
+
+    public function actionParams($id)
+    {
+        $model = new Param(['name' => Item::getModuleName($id)]);
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->session->setFlash('success', Yii::t('modules/module', 'Saved'));
+        }
+        return $this->render('params', compact('model'));
     }
 
 }

@@ -1,13 +1,14 @@
 <?php
 
 use yii\helpers\Html;
+use Yii;
 
 /**
  * @var yii\web\View $this
  * @var bariew\moduleModule\models\Item $model
  */
 
-$this->title =  'Create Item';
+$this->title =  Yii::t('modules/module', 'Create Item');
 $this->params['breadcrumbs'][] = ['label' => 'Items', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>

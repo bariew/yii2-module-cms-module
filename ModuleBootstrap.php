@@ -64,7 +64,7 @@ class ModuleBootstrap implements BootstrapInterface
             $moduleName = $matches[1];
             $alias = key($config['alias']);
             $basePath = $config['alias'][$alias];
-            $paramPath = $basePath . DIRECTORY_SEPARATOR . 'params' . DIRECTORY_SEPARATOR . 'main.php';
+            $paramPath = $basePath . DIRECTORY_SEPARATOR . 'params.php';
             $params =  file_exists($paramPath) ? require $paramPath : [];
             $params['moduleAlias'] = $alias;
             $modules[$moduleName] = [
@@ -90,7 +90,7 @@ class ModuleBootstrap implements BootstrapInterface
 
     public function renderMenu(Event $event)
     {
-        if (Yii::$app->getRequest()->getIsAjax() || !Menu::isActive()) {
+        if (Yii::$app->getRequest()->getIsAjax() || !Yii::$app->getModule('module')->params['renderMenu']) {
             return;
         }
 

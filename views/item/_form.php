@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use Yii;
 
 /**
  * @var yii\web\View $this
@@ -21,7 +22,7 @@ use yii\widgets\ActiveForm;
     <?php echo $form->field($model, 'type')->dropDownList($model::typeList()) ?>
 
     <div class="form-group">
-        <?php echo Html::submitButton('Save', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+        <?php echo Html::submitButton(Yii::t('modules/module', 'Save'), ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

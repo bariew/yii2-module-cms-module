@@ -1,14 +1,15 @@
 <?php
 
 use yii\helpers\Html;
+use Yii;
 
 /**
  * @var yii\web\View $this
  * @var bariew\moduleModule\models\Item $model
  */
 
-$this->title = 'Update Item: '  . $model->title;
-$this->params['breadcrumbs'][] = ['label' => 'Items', 'url' => ['index']];
+$this->title = Yii::t('modules/module', 'Update {title}', ['title' => $model->title]);
+$this->params['breadcrumbs'][] = ['label' =>Yii::t('modules/module', 'Items'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = 'Update';
 ?>

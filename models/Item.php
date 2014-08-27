@@ -38,6 +38,18 @@ class Item extends Model
         ];
     }
 
+    public function attributeLabels()
+    {
+        return [
+            'name'    => Yii::t('modules/module', 'Name'),
+            'description'    => Yii::t('modules/module', 'Description'),
+            'downloads'    => Yii::t('modules/module', 'Downloads'),
+            'url'    => Yii::t('modules/module', 'Url'),
+            'favers'    => Yii::t('modules/module', 'Favers'),
+            'repository'    => Yii::t('modules/module', 'Repository'),
+        ];
+    }
+
     public function moduleNameValidation($attribute)
     {
         if (!self::getModuleName($this->$attribute)) {
@@ -68,14 +80,41 @@ class Item extends Model
             ? $matches[1] : null;
     }
 
+    /**
+     * @return null|\yii\base\Module
+     */
+    public function getModule()
+    {
+        return Yii::$app->getModule(self::getModuleName($this->name));
+    }
+
+
+    public function hasLocalParams()
+    {
+        return file_exists($this->getModule()->basePath . DIRECTORY_SEPARATOR . 'params-local.php');
+    }
+
     public static function search()
     {
-        $items = json_decode(file_get_contents("https://packagist.org/search.json?q=yii2-cms-module"), true)["results"];
+        $items = json_decode(file_get_contents("https://packagist.org/search.json?tags[]=yii2-null-cms-module"), true)["results"];
         foreach ($items as $key => $attributes) {
             $items[$key] = new self(compact('attributes'));
             if (!$items[$key]->validate()) {
                 unset($items[$key]);
             }
+        }
+        return new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
+    }
+
+    public static function findAll()
+    {
+        $items = [];
+        foreach (self::installedList() as $options) {
+            $model = new self(['name' => $options['name']]);
+            if (!$model->validate()) {
+                continue;
+            }
+            $items[] = $model;
         }
         return new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
     }
@@ -183,7 +222,7 @@ class Item extends Model
             $bootstrap->attachModules();
             if ($success) {
                 self::migrate(self::$migrationCommands);
-                Yii::$app->session->setFlash('success', "Ready.");
+                Yii::$app->session->setFlash('success', Yii::t('modules/user', "Ready."));
             }
             echo Yii::$app->controller->actionIndex();
         });

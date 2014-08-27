@@ -15,7 +15,12 @@ class MenuWidget extends Nav
     
     private function setItems()
     {
+
         $result = [];
+        $order = explode(',', Yii::$app->getModule('module')->params['menuOrder']);
+        foreach ($order as $key) {
+            $result[trim($key)] = [];
+        }
         foreach (\Yii::$app->modules as $module) {
             $params = is_object($module)
                 ? $module->params
@@ -24,11 +29,14 @@ class MenuWidget extends Nav
                 continue;
             }
 
-            $oldItems = isset($result[$params['menu']['label']])
-                ? $result[$params['menu']['label']] : [];
-            $result[$params['menu']['label']] = ArrayHelper::merge($oldItems, $params['menu']);
+            if (isset($result[$params['menu']['label']]) && ($oldItem = $result[$params['menu']['label']])) {
+                $oldItems = isset($oldItem['items']) ? $oldItem['items'] : $oldItem;
+                $newItems = isset($params['menu']['items']) ? $params['menu']['items'] : $params['menu'];
+                $params['menu']['items'] = ArrayHelper::merge($oldItems, $newItems);
+            }
+            $result[$params['menu']['label']] = $params['menu'];
         }
-        ksort($result);
+        array_walk($result, function($v, $k) use(&$result) { if(!$v) unset($result[$k]);});
         $this->items = array_values($result);
     }
 }
