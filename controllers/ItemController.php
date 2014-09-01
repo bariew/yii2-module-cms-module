@@ -34,20 +34,9 @@ class ItemController extends Controller
 
     public function actionInstall()
     {
-        $items = Yii::$app->request->post('isInstalled') ? : [];
-        $toInstall = [];
-        $toRemove = [];
-        $installedItems = Item::installedList();
-        foreach ($items as $name => $value) {
-            $installed = isset($installedItems[$name]);
-            if ($value && !$installed) {
-                $toInstall[] = $name . ":dev-master";
-            } else if (!$value && $installed){
-                $toRemove[] = $name;
-            }
-        }
-        Item::remove($toRemove);
-        Item::install($toInstall);
+        Item::remove(Yii::$app->request->post('uninstall'));
+        Item::install(Yii::$app->request->post('install'));
+        Item::update(Yii::$app->request->post('update'));
         Yii::$app->session->setFlash('info', Yii::t('modules/module', 'Nothing to install/remove'));
         return $this->runAction('index');
     }

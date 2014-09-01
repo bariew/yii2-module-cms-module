@@ -113,9 +113,6 @@ class Item extends Model
         $items = $response["results"];
         foreach ($items as $key => $attributes) {
             $items[$key] = new self(compact('attributes'));
-//            if (!$items[$key]->validate()) {
-//                unset($items[$key]);
-//            }
         }
         $dataProvider = new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
         $dataProvider->setModels($items);
@@ -138,18 +135,17 @@ class Item extends Model
     }
 
 
-    public static function install(array $names)
+    public static function install($names)
     {
         if (!$names) {
             return true;
         }
-        foreach ($names as $name) {
-            if (!$moduleName = self::getModuleName($name)) {
+        foreach ($names as $key => &$name) {
+            if (!($moduleName = self::getModuleName($name)) || (!$module = Yii::$app->getModule($moduleName))) {
+                unset($names[$key]);
                 continue;
             }
-            if($module = Yii::$app->getModule($moduleName)) {
-                continue;
-            }
+            $name .= ":dev-master";
             self::$migrationCommands[] = ['module-up', [$moduleName]];
         }
         return self::runComposer([
@@ -158,7 +154,24 @@ class Item extends Model
         ]);
     }
 
-    public static function remove(array $names)
+    public static function update($names)
+    {
+        if (!$names) {
+            return true;
+        }
+        foreach ($names as $key => &$name) {
+            if (!($moduleName = self::getModuleName($name)) || (!$module = Yii::$app->getModule($moduleName))) {
+                unset($names[$key]);
+                continue;
+            }
+        }
+        return self::runComposer([
+            'command' => 'update',
+            'packages' => $names
+        ]);
+    }
+
+    public static function remove($names)
     {
         if (!$names) {
             return true;

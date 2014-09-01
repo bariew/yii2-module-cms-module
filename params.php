@@ -9,6 +9,7 @@ return array_merge([
                 'items' => [
                     ['label' => 'Installed', 'url' => ['/module/item/index']],
                     ['label' => 'Search', 'url' => ['/module/item/search']],
+                    ['label' => 'Migrate all', 'url' => ['/module/item/migrate']],
                 ]
             ],
         ]

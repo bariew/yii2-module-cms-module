@@ -27,10 +27,11 @@ $this->params['breadcrumbs'][] = $this->title;
                     'filter'    => false,
                 ],
                 [
-                    'label' => Yii::t('modules/module', 'Installed'),
-                    'format'=> 'raw',
-                    'value' => function ($data) {
-                        return Html::activeCheckbox($data, 'isInstalled', ['name'  => "isInstalled[{$data->name}]"]);
+                    'class' => \yii\grid\CheckboxColumn::className(),
+                    'name'  => 'install',
+                    'header' => Yii::t('modules/module', 'Install'),
+                    'checkboxOptions'   => function ($model, $key, $index, $column) {
+                        return $model->isInstalled ? ['disabled' => true, 'checked' => 'checked'] : [];
                     }
                 ],
             ],
