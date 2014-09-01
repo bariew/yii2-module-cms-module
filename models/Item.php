@@ -176,11 +176,9 @@ class Item extends Model
         if (!$names) {
             return true;
         }
-        foreach ($names as $name) {
-            if (!$moduleName = self::getModuleName($name)) {
-                continue;
-            }
-            if(!$module = Yii::$app->getModule($moduleName)) {
+        foreach ($names as $key => $name) {
+            if (!($moduleName = self::getModuleName($name)) || (!$module = Yii::$app->getModule($moduleName))) {
+                unset($names[$key]);
                 continue;
             }
             if (method_exists($module, 'uninstall')) {
