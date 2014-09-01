@@ -22,7 +22,15 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'class' => \yii\grid\CheckboxColumn::className(),
                     'name'  => 'uninstall',
-                    'header' => Yii::t('modules/module', 'Uninstall')
+                    'header' => Yii::t('modules/module', 'Uninstall'),
+                    'checkboxOptions' => function ($model, $key, $index, $column) {
+                        $options = ["value" => $model["name"], 'name' => 'uninstall'];
+                        if ($model->getModule()->id == 'module') {
+                            $options['onclick'] = 'if (this.checked && !confirm("'
+                                .Yii::t('', 'Be careful. You are going to install base installation module.').'")) return false;';
+                        }
+                        return $options;
+                    }
                 ],
                 [
                     'class' => \yii\grid\CheckboxColumn::className(),

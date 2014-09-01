@@ -95,7 +95,8 @@ class Item extends Model
 
     public function hasLocalParams()
     {
-        return file_exists($this->getModule()->basePath . DIRECTORY_SEPARATOR . 'params-local.php');
+        $paramsPath = $this->getModule()->basePath . DIRECTORY_SEPARATOR . 'params.php';
+        return file_exists($paramsPath) && strpos(file_get_contents($paramsPath), 'params-local');
     }
 
     public function search($params)
