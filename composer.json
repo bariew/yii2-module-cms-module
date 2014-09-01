@@ -14,7 +14,8 @@
         "php": ">=5.4.0",
         "yiisoft/yii2": "*",
         "composer/composer": "1.0.*@dev",
-        "bariew/yii2-module-migration-controller"   : "1.*"
+        "bariew/yii2-module-migration-controller"   : "1.*",
+        "bariew/yii2-dropdown-x": "dev-master"
     },
     "autoload": {
         "psr-4": {

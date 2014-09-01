@@ -4,7 +4,13 @@ return array_merge([
     'menu'  => [
         'label'    => 'Settings',
         'items' => [
-            ['label' => 'Modules', 'url' => ['/module/item/index']],
+            [
+                'label' => 'Modules',
+                'items' => [
+                    ['label' => 'Installed', 'url' => ['/module/item/index']],
+                    ['label' => 'Search', 'url' => ['/module/item/search']],
+                ]
+            ],
         ]
     ],
     'renderMenu' => 1,

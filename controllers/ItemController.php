@@ -19,13 +19,17 @@ class ItemController extends Controller
      */
     public function actionIndex()
     {
-        $searchModel = new Item();
-        $dataProvider = $searchModel::findAll();
-
         return $this->render('index', [
-            'dataProvider' => $dataProvider,
-            'searchModel' => $searchModel,
+            'dataProvider' => Item::findAll(),
         ]);
+    }
+
+    public function actionSearch()
+    {
+        $searchModel = new Item();
+        $dataProvider = $searchModel->search(Yii::$app->request->get());
+        $render = Yii::$app->request->isAjax ? 'renderPartial' : 'render';
+        return $this->$render('search', compact('searchModel', 'dataProvider'));
     }
 
     public function actionInstall()

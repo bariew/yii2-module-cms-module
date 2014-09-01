@@ -25,6 +25,10 @@ class Item extends Model
     public $favers;
     public $repository;
 
+    public $version;
+    public $alias;
+    public $bootstrap;
+
     public static $extConfigFile = '@vendor/yiisoft/extensions.php';
 
     public static $migrationCommands = [];
@@ -32,7 +36,7 @@ class Item extends Model
     public function rules()
     {
         return [
-            [['name', 'url', 'repository', 'description'], 'string'],
+            [['name', 'url', 'repository', 'description', 'version'], 'string'],
             [['downloads', 'favers'], 'integer'],
             [['name'], 'moduleNameValidation']
         ];
@@ -94,23 +98,37 @@ class Item extends Model
         return file_exists($this->getModule()->basePath . DIRECTORY_SEPARATOR . 'params-local.php');
     }
 
-    public static function search()
+    public function search($params)
     {
-        $items = json_decode(file_get_contents("https://packagist.org/search.json?tags[]=yii2-null-cms-module"), true)["results"];
+        $query = "https://packagist.org/search.json?tags[]=yii2-null-cms-module";
+
+        if (isset($params['page'])) {
+            $query .= '&page='.$params['page'];
+        }
+        $this->load($params);
+        if ($this->name) {
+            $query .= "&q=".$this->name;
+        }
+        $response = json_decode(file_get_contents($query), true);
+        $items = $response["results"];
         foreach ($items as $key => $attributes) {
             $items[$key] = new self(compact('attributes'));
-            if (!$items[$key]->validate()) {
-                unset($items[$key]);
-            }
+//            if (!$items[$key]->validate()) {
+//                unset($items[$key]);
+//            }
         }
-        return new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
+        $dataProvider = new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
+        $dataProvider->setModels($items);
+        $dataProvider->pagination->pageSize = 15;
+        $dataProvider->pagination->totalCount = $response['total'];
+        return $dataProvider;
     }
 
     public static function findAll()
     {
         $items = [];
         foreach (self::installedList() as $options) {
-            $model = new self(['name' => $options['name']]);
+            $model = new self(['attributes' => $options]);
             if (!$model->validate()) {
                 continue;
             }
@@ -202,7 +220,6 @@ class Item extends Model
     {
         $output = new HtmlOutput(fopen('php://stdout', 'w'));
         register_shutdown_function(function () use ($output) {
-           // print_r($output->messages);exit;
             $success = true;
             foreach ($output->messages as $key => $message) {
                 if (preg_match('/Exception/', $message)) {

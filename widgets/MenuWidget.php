@@ -2,20 +2,13 @@
 
 namespace bariew\moduleModule\widgets;
 use Yii;
-use yii\bootstrap\Nav;
+use bariew\dropdown\Nav;
 use yii\helpers\ArrayHelper;
 
 class MenuWidget extends Nav
 {
-    public function init() 
+    protected function createItems($items)
     {
-        parent::init();
-        $this->setItems();
-    }
-    
-    private function setItems()
-    {
-
         $result = [];
         $order = explode(',', Yii::$app->getModule('module')->params['menuOrder']);
         foreach ($order as $key) {
@@ -37,6 +30,6 @@ class MenuWidget extends Nav
             $result[$params['menu']['label']] = $params['menu'];
         }
         array_walk($result, function($v, $k) use(&$result) { if(!$v) unset($result[$k]);});
-        $this->items = array_values($result);
+        return array_values($result);
     }
 }
