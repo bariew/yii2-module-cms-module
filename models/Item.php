@@ -141,7 +141,7 @@ class Item extends Model
             return true;
         }
         foreach ($names as $key => &$name) {
-            if (!($moduleName = self::getModuleName($name)) || (!$module = Yii::$app->getModule($moduleName))) {
+            if (!($moduleName = self::getModuleName($name)) || ($module = Yii::$app->getModule($moduleName))) {
                 unset($names[$key]);
                 continue;
             }

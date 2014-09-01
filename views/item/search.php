@@ -31,7 +31,10 @@ $this->params['breadcrumbs'][] = $this->title;
                     'name'  => 'install',
                     'header' => Yii::t('modules/module', 'Install'),
                     'checkboxOptions'   => function ($model, $key, $index, $column) {
-                        return $model->isInstalled ? ['disabled' => true, 'checked' => 'checked'] : [];
+                        $options = ["value" => $model["name"]];
+                        return $model->isInstalled
+                            ? array_merge($options, ['disabled' => true, 'checked' => 'checked'])
+                            : $options;
                     }
                 ],
             ],
