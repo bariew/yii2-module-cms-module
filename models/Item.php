@@ -194,24 +194,8 @@ class Item extends Model
         ]);
     }
 
-
-    protected static function checkRequirements()
-    {
-        $s = DIRECTORY_SEPARATOR;
-        $root = Yii::$app->basePath;
-        $composerSettings = self::composerConfig();
-        foreach ($composerSettings['extra']['writable'] as $path) {
-            $fullPath = $root . $s . $path;
-            $fullPath = is_file($fullPath) ? $fullPath : $fullPath.$s;
-            if (!is_writable($fullPath)) {
-                throw new InvalidConfigException("{$path} is not writable");
-            }
-        }
-    }
-
     public static function runComposer(array $command, $render = true)
     {
-        self::checkRequirements();
         chdir(Yii::$app->basePath);
         error_reporting(E_ALL);
         ini_set('display_errors', TRUE);

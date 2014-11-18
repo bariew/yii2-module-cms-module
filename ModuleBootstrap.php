@@ -24,12 +24,6 @@ use yii\web\View;
  */
 class ModuleBootstrap implements BootstrapInterface
 {
-    protected static $paths = [
-        "vendor",
-        "composer.json",
-        "composer.lock"
-    ];
-
     public $app;
     /**
      * @inheritdoc
@@ -109,57 +103,5 @@ class ModuleBootstrap implements BootstrapInterface
         ]);
 
         NavBar::end();
-    }
-
-
-    const EXTRA_WRITABLE = 'writable';
-    const EXTRA_EXECUTABLE = 'executable';
-    /**
-     * Sets the correct permission for the files and directories listed in the extra section.
-     * @param CommandEvent $event
-     */
-    public static function setPermission($event)
-    {
-        foreach (self::$paths as $path) {
-            echo "Setting writable: $path ...\n";
-            self::createPath($path);
-            self::chmodR($path);
-        }
-    }
-
-    public static function test()
-    {
-        foreach (self::$paths as $path) {
-            $path = Yii::$app->basePath . DIRECTORY_SEPARATOR . $path;
-            self::createPath($path);
-            self::chmodR($path);
-        }
-        exit;
-    }
-
-    public static function createPath($path)
-    {
-        if (file_exists($path)) {
-            return;
-        }
-        if (preg_match('/.*\.\w+$/', $path)) {
-            touch($path);
-        } else {
-            mkdir($path);
-        }
-    }
-
-    public static function chmodR($path) {
-        chmod($path, 0777);
-        if (is_file($path)) {
-            return;
-        }
-        foreach (scandir($path) as $file) {
-            if(in_array($file, ['.', '..'])) {
-                continue;
-            }
-            $subpath = $path . DIRECTORY_SEPARATOR . $file;
-            self::chmodR($subpath);
-        }
     }
 }
