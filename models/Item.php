@@ -151,7 +151,8 @@ class Item extends Model
         }
         return self::runComposer([
             'command' => 'require',
-            'packages' => $names
+            'packages' => $names,
+            '--no-update' => true,
         ]);
     }
 
