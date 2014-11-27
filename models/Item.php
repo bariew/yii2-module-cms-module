@@ -7,6 +7,7 @@ use Yii;
 use yii\base\Model;
 use yii\console\Application as ConsoleApplication;
 use yii\console\controllers\MigrateController;
+use yii\web\Application;
 
 class Item extends Model
 {
@@ -80,9 +81,12 @@ class Item extends Model
         }
         $config = new ConfigManager();
         $modules = $config->mainConfig['modules'];
+        $addMigrations = [];
+        $removeMigrations = [];
         foreach ($data as $id => $attributes) {
             $item = self::findOne($id);
             if (!isset($attributes['installed'])) {
+                $removeMigrations[] = ['module-down', [$item->moduleName]];
                 unset($modules[$item->moduleName]);
                 continue;
             }
@@ -93,41 +97,29 @@ class Item extends Model
                 $modules[$attributes['moduleName']]['params']
                     = self::moduleList()[$item->class]->params;
             }
+            $addMigrations[] = ['module-up', [$attributes['moduleName']]];
         }
-        return $config->put(compact('modules'));
+
+        return
+            self::migrate($removeMigrations)
+            && $config->put(compact('modules'))
+            && self::migrate($addMigrations);
     }
 
-    public static function migrate(&$actions)
+    public static function migrate($actions)
     {
         if (!$actions) {
             return true;
         }
-        $webApp = Yii::$app;
-        try {
-            $consoleConfig = require_once Yii::getAlias('@app/config/console.php');
-            Yii::$app = new ConsoleApplication($consoleConfig);
-            /**
-             * @var MigrateController $controller
-             */
-            $controller =  Yii::$app->createController('migrate')[0];
-            $controller->interactive = false;
-            error_reporting(E_ALL);
-            ini_set('display_errors', '1');
-            defined('YII_DEBUG') or define('YII_DEBUG', true);
-            defined('YII_ENV') or define('YII_ENV', 'dev');
-            defined('STDOUT') or define ('STDOUT', 'php://stdout');
-            foreach ($actions as $action) {
-                $controller->runAction($action[0], $action[1]);
-            }
-            Yii::$app->response->clearOutputBuffers();
-        } catch (\Exception $e) {
-            Yii::$app = $webApp;
-            echo $e->getMessage() . "\n\n" . $e->getTraceAsString();
-            Yii::$app->session->setFlash('error', $e->getMessage());
-            return false;
+        $app = new Application((new ConfigManager())->mainConfig);
+        /**
+         * @var MigrateController $controller
+         */
+        $controller =  $app->createController('migrate')[0];
+        $controller->interactive = false;
+        foreach ($actions as $action) {
+            $controller->runAction($action[0], $action[1]);
         }
-        $actions = [];
-        Yii::$app = $webApp;
         return true;
     }
 

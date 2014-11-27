@@ -36,7 +36,7 @@ class ItemController extends Controller
         $actions = [['up', ['all']]];
         Item::migrate($actions);
         Yii::$app->session->setFlash('success', Yii::t('modules/module', 'Successful migration!'));
-        return $this->runAction('index');
+        return $this->redirect('index');
 
     }
 
