@@ -13,29 +13,25 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="module-index">
     <h1><?php echo Html::encode($this->title) ?></h1>
-    <?php $form = ActiveForm::begin(['action' => ['install']]); ?>
+    <?php $form = ActiveForm::begin(); ?>
     <?php echo GridView::widget([
             'dataProvider' => $dataProvider,
             'columns' => [
                 'name',
                 'version',
                 [
-                    'class' => \yii\grid\CheckboxColumn::className(),
-                    'name'  => 'uninstall',
-                    'header' => Yii::t('modules/module', 'Uninstall'),
-                    'checkboxOptions' => function ($model, $key, $index, $column) {
-                        $options = ["value" => $model["name"], 'name' => 'uninstall'];
-                        if ($model->getModule()->id == 'module') {
-                            $options['onclick'] = 'if (this.checked && !confirm("'
-                                .Yii::t('', 'Be careful. You are going to install base installation module.').'")) return false;';
-                        }
-                        return $options;
+                    'attribute' => 'moduleName',
+                    'format' => 'raw',
+                    'value' => function ($data) {
+                        return Html::textInput("Item[{$data->id}][moduleName]", $data->moduleName);
                     }
                 ],
                 [
-                    'class' => \yii\grid\CheckboxColumn::className(),
-                    'name'  => 'update',
-                    'header' => Yii::t('modules/module', 'Update')
+                    'attribute' => 'installed',
+                    'format' => 'raw',
+                    'value' => function ($data) {
+                        return Html::checkbox("Item[{$data->id}][installed]", $data->installed);
+                    }
                 ],
                 [
                     'class' => \yii\grid\ActionColumn::className(),
@@ -45,7 +41,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             /**
                              * @var Item $data
                              */
-                            return $data->hasLocalParams()
+                            return $data->params
                                 ? Html::a('<i class="glyphicon glyphicon-wrench"></i>', $url, ['title' => Yii::t('modules/module', 'Params')])
                                 : '';
                         },

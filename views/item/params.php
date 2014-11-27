@@ -12,7 +12,7 @@ use bariew\moduleModule\models\Param;
  * @var yii\widgets\ActiveForm $form
  */
 
-$this->title = Yii::t('modules/module', 'Update {title}', ['title' => $model->name]);
+$this->title = Yii::t('modules/module', 'Update {title}', ['title' => $model->item->moduleName]);
 $this->params['breadcrumbs'][] = ['label' =>Yii::t('modules/module', 'Items'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = 'Update';
 ?>
@@ -23,7 +23,11 @@ $this->params['breadcrumbs'][] = 'Update';
 
         <?php $form = ActiveForm::begin(); ?>
         <?php foreach ($model->attributes() as $attribute): ?>
-            <?php echo $form->field($model, $attribute)->textInput(['maxlength' => 255]) ?>
+            <?php if($model->isSerializable($attribute)): ?>
+                <?php echo $form->field($model, $attribute)->textarea() ?>
+            <?php else : ?>
+                <?php echo $form->field($model, $attribute)->textInput(['maxlength' => 255]) ?>
+            <?php endif ; ?>
         <?php endforeach; ?>
         <div class="form-group">
             <?php echo Html::submitButton(Yii::t('modules/module', 'Save'), ['class' => 'btn btn-primary']) ?>

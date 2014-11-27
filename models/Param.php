@@ -9,23 +9,91 @@
 namespace bariew\moduleModule\models;
 
 
-use bariew\moduleModule\components\FileModel;
+use app\config\ConfigManager;
 use Yii;
 
-class Param extends FileModel
-{
-    public $name;
+use yii\base\Model;
+use bariew\moduleModule\models\Item;
 
-    public function getPath()
+class Param extends Model
+{
+    /**
+     * @var Item
+     */
+    public $item;
+    protected $_attributes = [];
+    public $serializedAttributes = [];
+
+    public function validate($attributeNames = NULL, $clearErrors = true)
     {
-        return Yii::$app->getModule($this->name)->basePath . DIRECTORY_SEPARATOR . 'params-local.php';
+        foreach ($this->_attributes as $attribute => $value) {
+            if ($this->isSerializable($attribute)) {
+                $data = json_decode($value, true);
+                if (!is_array($data) || json_last_error()) {
+                    $this->addError($attribute, "Not valid json");
+                }
+            }
+        }
+
+        return parent::validate($attributeNames = NULL, $clearErrors = true);
+    }
+
+    public function save()
+    {
+        if (!$this->validate()) {
+            return false;
+        }
+        $config = new ConfigManager();
+        $modules = $config->mainConfig['modules'];
+        foreach ($this->_attributes as $attribute => $value) {
+            $modules[$this->item->moduleName]['params'][$attribute] = $this->isSerializable($attribute)
+                ? json_decode($value, true) : $value;
+        }
+        return $config->put(compact('modules'));
     }
 
     public function init()
     {
-        $path = Yii::$app->getModule($this->name)->basePath . DIRECTORY_SEPARATOR . 'params.php';
-        $this->setFileAttributes($path);
+        $attributes = Yii::$app->getModule($this->item->moduleName)->params;
+        foreach ($attributes as $name => $value) {
+            if (is_array($value)) {
+                $this->serializedAttributes[] = $name;
+                $value = json_encode($value);
+            }
+            $this->_attributes[$name] = $value;
+        }
         parent::init();
     }
 
+    public function attributes()
+    {
+        return array_keys($this->_attributes);
+    }
+
+    /**
+     * Returns the attribute names that are safe to be massively assigned in the current scenario.
+     * @return string[] safe attribute names
+     */
+    public function safeAttributes()
+    {
+        return $this->attributes();
+    }
+
+    public function __get($name)
+    {
+        if (isset($this->_attributes[$name])) {
+            return $this->_attributes[$name];
+        }
+        return parent::__get($name);
+    }
+
+    public function __set($name, $value)
+    {
+        return $this->_attributes[$name] = $value;
+    }
+
+    public function isSerializable($attribute)
+    {
+        return in_array($attribute, $this->serializedAttributes);
+    }
 } 

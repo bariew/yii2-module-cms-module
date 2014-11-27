@@ -14,10 +14,9 @@ class MenuWidget extends Nav
         foreach ($order as $key) {
             $result[trim($key)] = [];
         }
-        foreach (\Yii::$app->modules as $module) {
-            $params = is_object($module)
-                ? $module->params
-                : (isset($module['params']) ? $module['params'] : []);
+        foreach (\Yii::$app->modules as $id => $options) {
+            $module = Yii::$app->getModule($id);
+            $params = $module->params;
             if (!isset($params['menu'])) {
                 continue;
             }

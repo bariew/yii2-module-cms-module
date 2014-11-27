@@ -13,5 +13,20 @@ namespace bariew\moduleModule;
  */
 class Module extends \yii\base\Module
 {
-
+    public $params = [
+        'menu'  => [
+            'label'    => 'Settings',
+            'items' => [
+                [
+                    'label' => 'Modules',
+                    'items' => [
+                        ['label' => 'Installed', 'url' => ['/module/item/index']],
+                        ['label' => 'Migrate all', 'url' => ['/module/item/migrate']],
+                    ]
+                ],
+            ]
+        ],
+        'renderMenu' => 1,
+        'menuOrder' => ''
+    ];
 }

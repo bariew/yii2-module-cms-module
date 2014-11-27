@@ -2,19 +2,11 @@
 
 namespace bariew\moduleModule\models;
 
-use bariew\moduleModule\HtmlOutput;
-use bariew\moduleModule\ModuleBootstrap;
-use Codeception\Platform\SimpleOutput;
-use SebastianBergmann\Exporter\Exception;
+use app\config\ConfigManager;
 use Yii;
-use yii\base\InvalidConfigException;
 use yii\base\Model;
-use yii\data\ArrayDataProvider;
-use Composer\Console\Application;
 use yii\console\Application as ConsoleApplication;
-use Symfony\Component\Console\Input\ArrayInput;
 use yii\console\controllers\MigrateController;
-use yii\helpers\BaseFileHelper;
 
 class Item extends Model
 {
@@ -24,223 +16,85 @@ class Item extends Model
     public $url;
     public $favers;
     public $repository;
-
-    public $version;
+    public $id;
+    public $class;
+    public $basePath;
     public $alias;
+    public $moduleName;
+    public $version;
     public $bootstrap;
+    public $installed;
+    public $params;
 
-    public static $extConfigFile = '@vendor/yiisoft/extensions.php';
-
-    public static $migrationCommands = [];
+    private static $_extensionList;
+    private static $_moduleList;
 
     public function rules()
     {
         return [
-            [['name', 'url', 'repository', 'description', 'version'], 'string'],
-            [['downloads', 'favers'], 'integer'],
-            [['name'], 'moduleNameValidation']
+            [['id', 'name', 'url', 'repository', 'description', 'version', 'moduleName', 'class', 'basePath', 'alias'], 'string'],
+            [['downloads', 'favers', 'installed'], 'integer'],
+            [['params'], 'safe'],
         ];
     }
 
     public function attributeLabels()
     {
         return [
-            'name'    => Yii::t('modules/module', 'Name'),
-            'description'    => Yii::t('modules/module', 'Description'),
-            'downloads'    => Yii::t('modules/module', 'Downloads'),
-            'url'    => Yii::t('modules/module', 'Url'),
-            'favers'    => Yii::t('modules/module', 'Favers'),
-            'repository'    => Yii::t('modules/module', 'Repository'),
+            'moduleName'  => Yii::t('modules/module', 'Module name'),
+            'class'       => Yii::t('modules/module', 'Class'),
+            'basePath'    => Yii::t('modules/module', 'Base path'),
+            'alias'       => Yii::t('modules/module', 'Alias'),
+            'name'        => Yii::t('modules/module', 'Name'),
+            'description' => Yii::t('modules/module', 'Description'),
+            'downloads'   => Yii::t('modules/module', 'Downloads'),
+            'url'         => Yii::t('modules/module', 'Url'),
+            'favers'      => Yii::t('modules/module', 'Favers'),
+            'repository'  => Yii::t('modules/module', 'Repository'),
         ];
-    }
-
-    public function moduleNameValidation($attribute)
-    {
-        if (!self::getModuleName($this->$attribute)) {
-            $this->addError($attribute, "Not CMS module");
-        }
-    }
-
-    public static function composerConfig()
-    {
-        return json_decode(file_get_contents(
-            Yii::$app->basePath . DIRECTORY_SEPARATOR . 'composer.json'
-        ), true);
-    }
-
-    public static function installedList()
-    {
-        return Yii::$app->extensions;
-    }
-
-    public function getIsInstalled()
-    {
-        return isset(self::installedList()[$this->name]);
-    }
-
-    public static function getModuleName($name)
-    {
-        return  (preg_match('/yii2-(.*)-cms-module/', $name, $matches))
-            ? $matches[1] : null;
-    }
-
-    /**
-     * @return null|\yii\base\Module
-     */
-    public function getModule()
-    {
-        return Yii::$app->getModule(self::getModuleName($this->name));
-    }
-
-
-    public function hasLocalParams()
-    {
-        $paramsPath = $this->getModule()->basePath . DIRECTORY_SEPARATOR . 'params.php';
-        return file_exists($paramsPath) && strpos(file_get_contents($paramsPath), 'params-local');
-    }
-
-    public function search($params)
-    {
-        $query = "https://packagist.org/search.json?tags[]=yii2-null-cms-module";
-
-        if (isset($params['page'])) {
-            $query .= '&page='.$params['page'];
-        }
-        $this->load($params);
-        if ($this->name) {
-            $query .= "&q=".$this->name;
-        }
-        $response = json_decode(file_get_contents($query), true);
-        $items = $response["results"];
-        foreach ($items as $key => $attributes) {
-            $items[$key] = new self(compact('attributes'));
-        }
-        $dataProvider = new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
-        $dataProvider->setModels($items);
-        $dataProvider->pagination->pageSize = 15;
-        $dataProvider->pagination->totalCount = $response['total'];
-        return $dataProvider;
     }
 
     public static function findAll()
     {
         $items = [];
-        foreach (self::installedList() as $options) {
-            $model = new self(['attributes' => $options]);
-            if (!$model->validate()) {
-                continue;
-            }
+        foreach (self::extensionList() as $params) {
+            $model = new self(['attributes' => $params]);
             $items[] = $model;
         }
-        return new ArrayDataProvider(['allModels' => $items, 'key' => function ($model) {return $model['name']; }]);
+        return $items;
     }
 
-
-    public static function install($names)
+    /**
+     * @param $id
+     * @return Item
+     */
+    public static function findOne($id)
     {
-        if (!$names) {
-            return true;
+        return new self(self::extensionList()[$id]);
+    }
+
+    public static function updateAll($data)
+    {
+        if (!$data) {
+            return false;
         }
-        foreach ($names as $key => &$name) {
-            if (!($moduleName = self::getModuleName($name)) || ($module = Yii::$app->getModule($moduleName))) {
-                unset($names[$key]);
+        $config = new ConfigManager();
+        $modules = $config->mainConfig['modules'];
+        foreach ($data as $id => $attributes) {
+            $item = self::findOne($id);
+            if (!isset($attributes['installed'])) {
+                unset($modules[$item->moduleName]);
                 continue;
             }
-            $name .= ":dev-master";
-            self::$migrationCommands[] = ['module-up', [$moduleName]];
-        }
-        return self::runComposer([
-            'command' => 'require',
-            'packages' => $names,
-            '--no-update' => true,
-        ]);
-    }
-
-    public static function update($names)
-    {
-        if (!$names) {
-            return true;
-        }
-        foreach ($names as $key => &$name) {
-            if (!($moduleName = self::getModuleName($name)) || (!$module = Yii::$app->getModule($moduleName))) {
-                unset($names[$key]);
-                continue;
+            $modules[$attributes['moduleName']] = [
+                'class' => $item->class
+            ];
+            if (isset(self::moduleList()[$item->class])) {
+                $modules[$attributes['moduleName']]['params']
+                    = self::moduleList()[$item->class]->params;
             }
         }
-        return self::runComposer([
-            'command' => 'update',
-            'packages' => $names
-        ]);
-    }
-
-    public static function remove($names)
-    {
-        if (!$names) {
-            return true;
-        }
-        foreach ($names as $key => $name) {
-            if (!($moduleName = self::getModuleName($name)) || (!$module = Yii::$app->getModule($moduleName))) {
-                unset($names[$key]);
-                continue;
-            }
-            if (method_exists($module, 'uninstall')) {
-                call_user_func([$module, 'uninstall']);
-            }
-            self::$migrationCommands[] = ['module-down', [$moduleName]];
-        }
-        self::migrate(self::$migrationCommands);
-        return self::runComposer([
-            'command' => 'remove',
-            'packages' => $names
-        ]);
-    }
-
-    public static function runComposer(array $command, $render = true)
-    {
-        chdir(Yii::$app->basePath);
-        error_reporting(E_ALL);
-        ini_set('display_errors', TRUE);
-        ini_set('display_startup_errors', TRUE);
-        set_time_limit(0);
-        ini_set('memory_limit', '-1');
-        foreach (['xdebug_stop_code_coverage', 'xdebug_disable'] as $function) {
-            if (function_exists($function)) {
-                $function();
-            }
-        }
-        $output = $render ? self::htmlOutput() : null;
-
-        return (new Application())->run(new ArrayInput($command), $output);
-    }
-
-    public static function htmlOutput()
-    {
-        $output = new HtmlOutput(fopen('php://stdout', 'w'));
-        register_shutdown_function(function () use ($output) {
-            $success = true;
-            foreach ($output->messages as $key => $message) {
-                if (preg_match('/Exception/', $message)) {
-                    $success = false;
-                    Yii::$app->session->setFlash('error', $output->messages[$key+1]);
-                    break;
-                } elseif (preg_match('/Problem.*/', $message)) {
-                    $success = false;
-                    Yii::$app->session->setFlash('error', $message);
-                    break;
-                }
-                Yii::$app->session->setFlash('info', $message);
-            }
-            Yii::$app->extensions = require Yii::getAlias(self::$extConfigFile);
-            $bootstrap = new ModuleBootstrap();
-            $bootstrap->app = Yii::$app;
-            $bootstrap->attachModules();
-            if ($success) {
-                self::migrate(self::$migrationCommands);
-                Yii::$app->session->setFlash('success', Yii::t('modules/user', "Ready."));
-            }
-            echo Yii::$app->controller->actionIndex();
-        });
-        return $output;
+        return $config->put(compact('modules'));
     }
 
     public static function migrate(&$actions)
@@ -275,5 +129,49 @@ class Item extends Model
         $actions = [];
         Yii::$app = $webApp;
         return true;
+    }
+
+    public static function extensionList()
+    {
+        if (self::$_extensionList) {
+            return self::$_extensionList;
+        }
+        $result = [];
+        $modules = self::moduleList();
+        foreach (Yii::$app->extensions as $name => $config) {
+            $extName = preg_replace('/.*\/(.*)$/', '$1', $name);
+            if(!preg_match('/yii2-(.+)-cms-module/', $extName, $matches)){
+                continue;
+            }
+            $alias = key($config['alias']);
+            $basePath = $config['alias'][$alias];
+            $class = str_replace(['@', '/'], ['', '\\'], $alias) .'\Module';
+            $moduleName = isset($modules[$class]) ? $modules[$class]->id : $matches[1];
+            $config = array_merge($config, [
+                'id'         => $class,
+                'installed'  => isset($modules[$class]),
+                'name'       => $name,
+                'moduleName' => $moduleName,
+                'class'      => $class,
+                'basePath'   => $basePath,
+                'alias'      => $alias,
+                'params'     => isset($modules[$class]) ? $modules[$class]->params : [],
+            ]);
+            $result[$class] = $config;
+        }
+        return self::$_extensionList = $result;
+    }
+
+    public static function moduleList()
+    {
+        if (self::$_moduleList) {
+            return self::$_moduleList;
+        }
+        $modules = [];
+        foreach(Yii::$app->modules as $id => $options) {
+            $module = Yii::$app->getModule($id);
+            $modules[get_class($module)] = $module;
+        }
+        return self::$_moduleList = $modules;
     }
 }

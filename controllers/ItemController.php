@@ -6,6 +6,7 @@ use bariew\configModule\models\Params;
 use bariew\moduleModule\models\Item;
 use bariew\moduleModule\models\Param;
 use Yii;
+use yii\data\ArrayDataProvider;
 use yii\web\Controller;
 
 /**
@@ -19,32 +20,15 @@ class ItemController extends Controller
      */
     public function actionIndex()
     {
+        if (Item::updateAll(Yii::$app->request->post('Item'))) {
+            Yii::$app->session->setFlash('info', Yii::t('modules/module', 'Updated'));
+            $this->refresh();
+        }
         return $this->render('index', [
-            'dataProvider' => Item::findAll(),
+            'dataProvider' =>  new ArrayDataProvider([
+                'allModels' => Item::findAll(), 'key' => 'id'
+            ]),
         ]);
-    }
-
-    public function actionSearch()
-    {
-        $searchModel = new Item();
-        $dataProvider = $searchModel->search(Yii::$app->request->get());
-        $render = Yii::$app->request->isAjax ? 'renderPartial' : 'render';
-        return $this->$render('search', compact('searchModel', 'dataProvider'));
-    }
-
-    public function actionInstall()
-    {
-        Item::remove(Yii::$app->request->post('uninstall'));
-        Item::install(Yii::$app->request->post('install'));
-        Item::update(Yii::$app->request->post('update'));
-        Yii::$app->session->setFlash('info', Yii::t('modules/module', 'Nothing to install/remove'));
-        return $this->runAction('index');
-    }
-
-    public function actionError($message)
-    {
-        echo $message;
-        return $this->render('error', compact('message'));
     }
 
     public function actionMigrate()
@@ -58,9 +42,10 @@ class ItemController extends Controller
 
     public function actionParams($id)
     {
-        $model = new Param(['name' => Item::getModuleName($id)]);
+        $model = new Param(['item' => Item::findOne($id)]);
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->setFlash('success', Yii::t('modules/module', 'Saved'));
+            $this->refresh();
         }
         return $this->render('params', compact('model'));
     }

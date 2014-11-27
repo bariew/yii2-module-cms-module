@@ -2,7 +2,6 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
-use Yii;
 
 /**
  * @var yii\web\View $this
