@@ -31,6 +31,7 @@ class Param extends Model
                 $data = json_decode($value, true);
                 if (!is_array($data) || json_last_error()) {
                     $this->addError($attribute, "Not valid json");
+                    return false;
                 }
             }
         }
@@ -43,13 +44,12 @@ class Param extends Model
         if (!$this->validate()) {
             return false;
         }
-        $config = new ConfigManager();
-        $modules = $config->mainConfig['modules'];
+        $attributes = [];
         foreach ($this->_attributes as $attribute => $value) {
-            $modules[$this->item->moduleName]['params'][$attribute] = $this->isSerializable($attribute)
+            $attributes[$attribute] = $this->isSerializable($attribute)
                 ? json_decode($value, true) : $value;
         }
-        return $config->put(compact('modules'));
+        return $this->getConfig()->set(['modules', $this->item->moduleName, 'params'], $attributes);
     }
 
     public function init()
@@ -95,5 +95,12 @@ class Param extends Model
     public function isSerializable($attribute)
     {
         return in_array($attribute, $this->serializedAttributes);
+    }
+
+    protected function getConfig()
+    {
+        return new \bariew\phptools\FileModel(Yii::getAlias('@app/config/web.php'), [
+            'writePath' => Yii::getAlias('@app/config/local/main.php')
+        ]);
     }
 } 

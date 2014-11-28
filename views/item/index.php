@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'dataProvider' => $dataProvider,
             'columns' => [
                 'name',
-                'version',
+                'description',
                 [
                     'attribute' => 'moduleName',
                     'format' => 'raw',

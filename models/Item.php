@@ -5,7 +5,6 @@ namespace bariew\moduleModule\models;
 use app\config\ConfigManager;
 use Yii;
 use yii\base\Model;
-use yii\console\Application as ConsoleApplication;
 use yii\console\controllers\MigrateController;
 use yii\web\Application;
 
@@ -79,8 +78,8 @@ class Item extends Model
         if (!$data) {
             return false;
         }
-        $config = new ConfigManager();
-        $modules = $config->mainConfig['modules'];
+        $config =self::getConfig();
+        $modules = $config->data['modules'];
         $addMigrations = [];
         $removeMigrations = [];
         foreach ($data as $id => $attributes) {
@@ -111,12 +110,13 @@ class Item extends Model
         if (!$actions) {
             return true;
         }
-        $app = new Application((new ConfigManager())->mainConfig);
+        $app = new Application(self::getConfig()->data);
         /**
          * @var MigrateController $controller
          */
         $controller =  $app->createController('migrate')[0];
         $controller->interactive = false;
+        defined('STDOUT') or define ('STDOUT', 'php://stdout');
         foreach ($actions as $action) {
             $controller->runAction($action[0], $action[1]);
         }
@@ -139,6 +139,7 @@ class Item extends Model
             $basePath = $config['alias'][$alias];
             $class = str_replace(['@', '/'], ['', '\\'], $alias) .'\Module';
             $moduleName = isset($modules[$class]) ? $modules[$class]->id : $matches[1];
+            $composerData = json_decode(file_get_contents(Yii::getAlias($alias . '/composer.json')), true);
             $config = array_merge($config, [
                 'id'         => $class,
                 'installed'  => isset($modules[$class]),
@@ -148,6 +149,7 @@ class Item extends Model
                 'basePath'   => $basePath,
                 'alias'      => $alias,
                 'params'     => isset($modules[$class]) ? $modules[$class]->params : [],
+                'description'=> @$composerData['description']
             ]);
             $result[$class] = $config;
         }
@@ -165,5 +167,12 @@ class Item extends Model
             $modules[get_class($module)] = $module;
         }
         return self::$_moduleList = $modules;
+    }
+
+    protected static function getConfig()
+    {
+        return new \bariew\phptools\FileModel(Yii::getAlias('@app/config/web.php'), [
+            'writePath' => Yii::getAlias('@app/config/local/main.php')
+        ]);
     }
 }
