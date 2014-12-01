@@ -9,6 +9,8 @@ use Yii;
 use yii\data\ArrayDataProvider;
 use yii\web\Controller;
 
+use bariew\moduleModule\widgets\MenuWidget;
+use yii\bootstrap\NavBar;
 /**
  * ItemController implements the CRUD actions for Item model.
  */
@@ -48,6 +50,22 @@ class ItemController extends Controller
             $this->refresh();
         }
         return $this->render('params', compact('model'));
+    }
+
+    public function actionMenu()
+    {
+        NavBar::begin([
+                'brandLabel' => Yii::$app->name,
+                'brandUrl' => Yii::$app->homeUrl,
+                'options' => [
+                    'class' => 'navbar-inverse navbar-fixed-top',
+                ],
+            ]);
+        echo MenuWidget::widget([
+            'options' => ['class' => 'navbar-nav navbar-right']
+        ]);
+
+        NavBar::end();
     }
 
 }

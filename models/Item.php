@@ -153,6 +153,7 @@ class Item extends Model
             ]);
             $result[$class] = $config;
         }
+        ksort($result);
         return self::$_extensionList = $result;
     }
 
@@ -167,6 +168,14 @@ class Item extends Model
             $modules[get_class($module)] = $module;
         }
         return self::$_moduleList = $modules;
+    }
+
+    public static function getModuleByClassName($class)
+    {
+        $list = self::moduleList();
+        return isset($list[$class])
+            ? $list[$class]
+            : false;
     }
 
     protected static function getConfig()

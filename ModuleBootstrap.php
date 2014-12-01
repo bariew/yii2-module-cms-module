@@ -7,14 +7,11 @@
 
 namespace bariew\moduleModule;
 
-use bariew\moduleModule\models\Menu;
-use bariew\moduleModule\widgets\MenuWidget;
+use bariew\moduleModule\controllers\ItemController;
+use bariew\moduleModule\models\Item;
 use Yii;
 use yii\base\BootstrapInterface;
-use yii\composer\Installer;
 use \yii\web\Application;
-use yii\base\Event;
-use yii\bootstrap\NavBar;
 use yii\web\View;
 
 /**
@@ -40,21 +37,13 @@ class ModuleBootstrap implements BootstrapInterface
 
     public function renderMenu()
     {
-        if (Yii::$app->getRequest()->getIsAjax() || !Yii::$app->getModule('module')->params['renderMenu']) {
-            return;
+        if (Yii::$app->getRequest()->getIsAjax()) {
+            return true;
         }
-
-        NavBar::begin([
-            'brandLabel' => 'Home',
-            'brandUrl' => Yii::$app->homeUrl,
-            'options' => [
-                'class' => 'navbar-inverse navbar-fixed-top',
-            ],
-        ]);
-        echo MenuWidget::widget([
-            'options' => ['class' => 'navbar-nav navbar-right']
-        ]);
-
-        NavBar::end();
+        $module = Item::getModuleByClassName(Module::className());
+        try {
+            $controller = new ItemController('item', $module);
+            return $controller->runAction('menu');
+        } catch (\Exception $e) {}
     }
 }

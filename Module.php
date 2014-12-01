@@ -19,14 +19,10 @@ class Module extends \yii\base\Module
             'items' => [
                 [
                     'label' => 'Modules',
-                    'items' => [
-                        ['label' => 'Installed', 'url' => ['/module/item/index']],
-                        ['label' => 'Migrate all', 'url' => ['/module/item/migrate']],
-                    ]
+                    'url' => ['/module/item/index'],
                 ],
             ]
         ],
-        'renderMenu' => 1,
         'menuOrder' => ''
     ];
 }
