@@ -22,13 +22,16 @@ class ItemController extends Controller
      */
     public function actionIndex()
     {
-        if (Item::updateAll(Yii::$app->request->post('Item'))) {
+        $items = Item::updateAll(Yii::$app->request->post('Item'));
+        if ($items === true) {
             Yii::$app->session->setFlash('info', Yii::t('modules/module', 'Updated'));
-            $this->refresh();
+            return $this->refresh();
+        } else if (!$items) {
+            $items = Item::findAll();
         }
         return $this->render('index', [
             'dataProvider' =>  new ArrayDataProvider([
-                'allModels' => Item::findAll(), 'key' => 'id'
+                'allModels' => $items, 'key' => 'id'
             ]),
         ]);
     }
@@ -39,7 +42,6 @@ class ItemController extends Controller
         Item::migrate($actions);
         Yii::$app->session->setFlash('success', Yii::t('modules/module', 'Successful migration!'));
         return $this->redirect('index');
-
     }
 
     public function actionParams($id)
@@ -55,12 +57,12 @@ class ItemController extends Controller
     public function actionMenu()
     {
         NavBar::begin([
-                'brandLabel' => Yii::$app->name,
-                'brandUrl' => Yii::$app->homeUrl,
-                'options' => [
-                    'class' => 'navbar-inverse navbar-fixed-top',
-                ],
-            ]);
+            'brandLabel' => Yii::$app->name,
+            'brandUrl' => Yii::$app->homeUrl,
+            'options' => [
+                'class' => 'navbar-inverse navbar-fixed-top',
+            ],
+        ]);
         echo MenuWidget::widget([
             'options' => ['class' => 'navbar-nav navbar-right']
         ]);

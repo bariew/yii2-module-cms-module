@@ -23,30 +23,20 @@ $this->params['breadcrumbs'][] = $this->title;
                     'attribute' => 'moduleName',
                     'format' => 'raw',
                     'value' => function ($data) {
-                        return Html::textInput("Item[{$data->id}][moduleName]", $data->moduleName);
+                        $form = ActiveForm::begin();
+                        return $form->field($data, 'moduleName')
+                            ->label('')->textInput(['name' => "Item[{$data->id}][moduleName]"])
+                        ;
                     }
                 ],
                 [
                     'attribute' => 'installed',
                     'format' => 'raw',
+
                     'value' => function ($data) {
-                        return Html::checkbox("Item[{$data->id}][installed]", $data->installed);
-                    }
+                        return Html::checkbox("Item[{$data->id}][installed]", $data->installed, ['class' => 'form-control']);
+                    },
                 ],
-                [
-                    'class' => \yii\grid\ActionColumn::className(),
-                    'template'  => '{params}',
-                    'buttons'   => [
-                        'params'  => function ($url, $data) {
-                            /**
-                             * @var Item $data
-                             */
-                            return $data->params
-                                ? Html::a('<i class="glyphicon glyphicon-wrench"></i>', $url, ['title' => Yii::t('modules/module', 'Params')])
-                                : '';
-                        },
-                    ]
-                ]
             ],
         ]); ?>
     <?= Html::submitButton(Yii::t('modules/module', "Save"), ['class' => 'btn btn-primary']); ?>

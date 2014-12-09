@@ -3,6 +3,8 @@
 namespace bariew\moduleModule\models;
 
 use app\config\ConfigManager;
+use bariew\moduleMigration\ModuleMigration;
+use bariew\moduleModule\Module;
 use Yii;
 use yii\base\Model;
 use yii\console\controllers\MigrateController;
@@ -32,6 +34,7 @@ class Item extends Model
     public function rules()
     {
         return [
+            [['moduleName'], 'required'],
             [['id', 'name', 'url', 'repository', 'description', 'version', 'moduleName', 'class', 'basePath', 'alias'], 'string'],
             [['downloads', 'favers', 'installed'], 'integer'],
             [['params'], 'safe'],
@@ -75,34 +78,52 @@ class Item extends Model
 
     public static function updateAll($data)
     {
+        $items = [];
+        $errors = [];
         if (!$data) {
             return false;
         }
-        $config =self::getConfig();
-        $modules = $config->data['modules'];
-        $addMigrations = [];
-        $removeMigrations = [];
         foreach ($data as $id => $attributes) {
-            $item = self::findOne($id);
-            if (!isset($attributes['installed'])) {
-                $removeMigrations[] = ['module-down', [$item->moduleName]];
-                unset($modules[$item->moduleName]);
-                continue;
+            $items[] = $item = self::findOne($id);
+            $item->installed = @$attributes['installed'];
+            $item->attributes = $attributes;
+            if (!$item->installed) {
+                $item->uninstall();
+            } else if(!$item->validate()) {
+                $errors[] = $item;
+            } else {
+                $item->install();
             }
-            $modules[$attributes['moduleName']] = [
-                'class' => $item->class
-            ];
-            if (isset(self::moduleList()[$item->class])) {
-                $modules[$attributes['moduleName']]['params']
-                    = self::moduleList()[$item->class]->params;
-            }
-            $addMigrations[] = ['module-up', [$attributes['moduleName']]];
         }
+        return $errors ? $items : true;
+    }
 
-        return
-            self::migrate($removeMigrations)
-            && $config->put(compact('modules'))
-            && self::migrate($addMigrations);
+
+    public function install()
+    {
+        $config = self::getConfig();
+        $modules = $config->data['modules'];
+        $modules[$this->moduleName] = [
+            'class' => $this->class
+        ];
+        if (isset(self::moduleList()[$this->class])) {
+            $modules[$this->moduleName]['params']
+                = self::moduleList()[$this->class]->params;
+        }
+        $config->put(compact('modules'));
+        Yii::configure(Yii::$app, compact('modules'));
+        self::migrate([['module-up', [$this->moduleName]]]);
+    }
+
+    public function uninstall()
+    {
+        $config = self::getConfig();
+        $modules = $config->data['modules'];
+        $bootstrap = $config->data['bootstrap'];
+        unset($modules[$this->moduleName]);
+        $bootstrap = array_diff($bootstrap, [$this->moduleName]);
+        $config->put(compact('modules', 'bootstrap'));
+        self::migrate([['module-down', [$this->moduleName]]]);
     }
 
     public static function migrate($actions)
@@ -110,36 +131,37 @@ class Item extends Model
         if (!$actions) {
             return true;
         }
-        $app = new Application(self::getConfig()->data);
         /**
          * @var MigrateController $controller
          */
-        $controller =  $app->createController('migrate')[0];
+        $controller = new ModuleMigration('migrate', self::getModuleByClassName(Module::className()));
         $controller->interactive = false;
+        ob_start();
         defined('STDOUT') or define ('STDOUT', 'php://stdout');
         foreach ($actions as $action) {
             $controller->runAction($action[0], $action[1]);
         }
+        ob_clean();
+        Yii::$app->cache->flush();
         return true;
     }
 
     public static function extensionList()
     {
-        if (self::$_extensionList) {
-            return self::$_extensionList;
-        }
         $result = [];
         $modules = self::moduleList();
+        $knownModules = ['yiisoft/yii2-gii', 'yiisoft/yii2-debug'];
+        $keywords = ['yii2', 'module'];
+
         foreach (Yii::$app->extensions as $name => $config) {
-            $extName = preg_replace('/.*\/(.*)$/', '$1', $name);
-            if(!preg_match('/yii2-(.+)-cms-module/', $extName, $matches)){
+            $alias = key($config['alias']);
+            $composerData = json_decode(file_get_contents(Yii::getAlias($alias . '/composer.json')), true);
+            if (!in_array($name, $knownModules) && (!isset($composerData['keywords']) || array_diff($keywords, $composerData['keywords']))) {
                 continue;
             }
-            $alias = key($config['alias']);
             $basePath = $config['alias'][$alias];
             $class = str_replace(['@', '/'], ['', '\\'], $alias) .'\Module';
-            $moduleName = isset($modules[$class]) ? $modules[$class]->id : $matches[1];
-            $composerData = json_decode(file_get_contents(Yii::getAlias($alias . '/composer.json')), true);
+            $moduleName = isset($modules[$class]) ? $modules[$class]->id : "";
             $config = array_merge($config, [
                 'id'         => $class,
                 'installed'  => isset($modules[$class]),
@@ -154,20 +176,17 @@ class Item extends Model
             $result[$class] = $config;
         }
         ksort($result);
-        return self::$_extensionList = $result;
+        return $result;
     }
 
     public static function moduleList()
     {
-        if (self::$_moduleList) {
-            return self::$_moduleList;
-        }
         $modules = [];
         foreach(Yii::$app->modules as $id => $options) {
             $module = Yii::$app->getModule($id);
             $modules[get_class($module)] = $module;
         }
-        return self::$_moduleList = $modules;
+        return $modules;
     }
 
     public static function getModuleByClassName($class)
@@ -178,10 +197,14 @@ class Item extends Model
             : false;
     }
 
+    private static $_config;
     protected static function getConfig()
     {
-        return new \bariew\phptools\FileModel(Yii::getAlias('@app/config/web.php'), [
-            'writePath' => Yii::getAlias('@app/config/local/main.php')
-        ]);
+        return self::$_config
+            ? self::$_config
+            : self::$_config = new \bariew\phptools\FileModel(Yii::getAlias('@app/config/web.php'), [
+                'writePath' => Yii::getAlias('@app/config/local/main.php')
+            ]);
     }
+
 }
