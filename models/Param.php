@@ -49,7 +49,7 @@ class Param extends Model
             $attributes[$attribute] = $this->isSerializable($attribute)
                 ? json_decode($value, true) : $value;
         }
-        return $this->getConfig()->set(['modules', $this->item->moduleName, 'params'], $attributes);
+        return ConfigManager::set(['modules', $this->item->moduleName, 'params'], $attributes);
     }
 
     public function init()
@@ -95,12 +95,5 @@ class Param extends Model
     public function isSerializable($attribute)
     {
         return in_array($attribute, $this->serializedAttributes);
-    }
-
-    protected function getConfig()
-    {
-        return new \bariew\phptools\FileModel(Yii::getAlias('@app/config/web.php'), [
-            'writePath' => Yii::getAlias('@app/config/local/main.php')
-        ]);
     }
 } 
