@@ -109,7 +109,7 @@ class Item extends Model
         self::migrate([['module-up', [$this->moduleName]]]);
         $module = self::getModuleByClassName($this->class);
         if (method_exists($module, 'install')) {
-            $module->install();
+            $module->install($this->moduleName);
         }
     }
 
@@ -119,7 +119,7 @@ class Item extends Model
             return true;
         }
         if (method_exists($module, 'uninstall')) {
-            $module->uninstall();
+            $module->uninstall($this->moduleName);
         }
         $config = ConfigManager::getData();
         unset($config['modules'][$this->moduleName]);
