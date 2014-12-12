@@ -8,7 +8,6 @@ use bariew\moduleModule\Module;
 use Yii;
 use yii\base\Model;
 use yii\console\controllers\MigrateController;
-use yii\web\Application;
 
 class Item extends Model
 {
@@ -95,11 +94,9 @@ class Item extends Model
         return $errors ? $items : true;
     }
 
-
     public function install()
     {
-        $config = self::getConfig();
-        $modules = $config->data['modules'];
+        $modules = ConfigManager::getData()['modules'];
         if ($module = self::getModuleByClassName($this->class)) {
             $modules[$this->moduleName]['params'] = $module->params;
             unset($modules[$module->id]);
@@ -107,19 +104,27 @@ class Item extends Model
         $modules[$this->moduleName] = [
             'class' => $this->class
         ];
-        $config->put(compact('modules'));
+        ConfigManager::put(compact('modules'));
         Yii::configure(Yii::$app, compact('modules'));
         self::migrate([['module-up', [$this->moduleName]]]);
+        $module = self::getModuleByClassName($this->class);
+        if (method_exists($module, 'install')) {
+            $module->install();
+        }
     }
 
     public function uninstall()
     {
-        $config = self::getConfig();
-        $modules = $config->data['modules'];
-        $bootstrap = $config->data['bootstrap'];
-        unset($modules[$this->moduleName]);
-        $bootstrap = array_diff($bootstrap, [$this->moduleName]);
-        $config->put(compact('modules', 'bootstrap'));
+        if (!$module = self::getModuleByClassName($this->class)) {
+            return true;
+        }
+        if (method_exists($module, 'uninstall')) {
+            $module->uninstall();
+        }
+        $config = ConfigManager::getData();
+        unset($config['modules'][$this->moduleName]);
+        $config['bootstrap'] = array_diff($config['bootstrap'], [$this->moduleName]);
+        ConfigManager::put($config);
         self::migrate([['module-down', [$this->moduleName]]]);
     }
 
@@ -158,7 +163,12 @@ class Item extends Model
             }
             $basePath = $config['alias'][$alias];
             $class = str_replace(['@', '/'], ['', '\\'], $alias) .'\Module';
-            $moduleName = isset($modules[$class]) ? $modules[$class]->id : $class;
+            $pregModuleName = preg_replace('/^\w+\\\\([a-z0-9]+).*\\\\.*/', '$1', $class);
+            $moduleName = isset($modules[$class])
+                ? $modules[$class]->id
+                : ($pregModuleName
+                    ? $pregModuleName
+                    : $class);
             $config = array_merge($config, [
                 'id'         => $class,
                 'installed'  => isset($modules[$class]),
@@ -197,15 +207,4 @@ class Item extends Model
             ? $list[$class]
             : false;
     }
-
-    private static $_config;
-    protected static function getConfig()
-    {
-        return self::$_config
-            ? self::$_config
-            : self::$_config = new \bariew\phptools\FileModel(Yii::getAlias('@app/config/web.php'), [
-                'writePath' => Yii::getAlias('@app/config/local/main.php')
-            ]);
-    }
-
 }
