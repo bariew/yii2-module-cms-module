@@ -99,6 +99,9 @@ class Item extends Model
         $modules = ConfigManager::getData()['modules'];
         if ($module = self::getModuleByClassName($this->class)) {
             $modules[$this->moduleName]['params'] = $module->params;
+            if (method_exists($module, 'uninstall')) {
+                $module->uninstall($module->id);
+            }
             unset($modules[$module->id]);
         }
         $modules[$this->moduleName] = [
