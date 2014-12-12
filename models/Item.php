@@ -28,9 +28,6 @@ class Item extends Model
     public $installed;
     public $params;
 
-    private static $_extensionList;
-    private static $_moduleList;
-
     public function rules()
     {
         return [
@@ -103,13 +100,13 @@ class Item extends Model
     {
         $config = self::getConfig();
         $modules = $config->data['modules'];
+        if ($module = self::getModuleByClassName($this->class)) {
+            $modules[$this->moduleName]['params'] = $module->params;
+            unset($modules[$module->id]);
+        }
         $modules[$this->moduleName] = [
             'class' => $this->class
         ];
-        if (isset(self::moduleList()[$this->class])) {
-            $modules[$this->moduleName]['params']
-                = self::moduleList()[$this->class]->params;
-        }
         $config->put(compact('modules'));
         Yii::configure(Yii::$app, compact('modules'));
         self::migrate([['module-up', [$this->moduleName]]]);
@@ -161,7 +158,7 @@ class Item extends Model
             }
             $basePath = $config['alias'][$alias];
             $class = str_replace(['@', '/'], ['', '\\'], $alias) .'\Module';
-            $moduleName = isset($modules[$class]) ? $modules[$class]->id : "";
+            $moduleName = isset($modules[$class]) ? $modules[$class]->id : $class;
             $config = array_merge($config, [
                 'id'         => $class,
                 'installed'  => isset($modules[$class]),
@@ -189,6 +186,10 @@ class Item extends Model
         return $modules;
     }
 
+    /**
+     * @param $class
+     * @return \yii\base\Module
+     */
     public static function getModuleByClassName($class)
     {
         $list = self::moduleList();

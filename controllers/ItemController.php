@@ -64,6 +64,7 @@ class ItemController extends Controller
             ],
         ]);
         echo MenuWidget::widget([
+            'direction' => 'left',
             'options' => ['class' => 'navbar-nav navbar-right']
         ]);
 

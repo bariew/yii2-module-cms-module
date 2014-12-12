@@ -1,7 +1,7 @@
 <?php
 /**
  * Module class file.
- * @copyright (c) 2014, Galament
+ * @copyright (c) 2014, Bariew
  * @license http://www.opensource.org/licenses/bsd-license.php
  */
 

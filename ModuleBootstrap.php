@@ -1,7 +1,7 @@
 <?php
 /**
  * ModuleBootstrap class file
- * @copyright Copyright (c) 2014 Galament
+ * @copyright Copyright (c) 2014 Bariew
  * @license http://www.yiiframework.com/license/
  */
 
