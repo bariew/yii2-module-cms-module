@@ -26,6 +26,9 @@ class ModuleBootstrap implements BootstrapInterface
      */
     public function bootstrap($app)
     {
+        if (!$module = Item::getModuleByClassName(Module::className())) {
+            return;
+        }
         $app->controllerMap['migrate'] = 'bariew\moduleMigration\ModuleMigration';
         if ($app instanceof Application) {
             $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {

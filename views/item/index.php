@@ -32,9 +32,15 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'installed',
                     'format' => 'raw',
-
                     'value' => function ($data) {
-                        return Html::checkbox("Item[{$data->id}][installed]", $data->installed, ['class' => 'form-control']);
+                        /**
+                         * @var Item $data
+                         */
+                        $attributes = ['class' => 'form-control'];
+                        if ($data->class == \bariew\moduleModule\Module::className()) {
+                            $attributes['onclick'] = 'if (!confirm("'. Yii::t('modules/module', "This module is critically important") .'")){return false;} ';
+                        }
+                        return Html::checkbox("Item[{$data->id}][installed]", $data->installed, $attributes);
                     },
                 ],
             ],
