@@ -98,21 +98,29 @@ class Item extends Model
     {
         $modules = ConfigManager::getData()['modules'];
         if ($module = self::getModuleByClassName($this->class)) {
+            $moduleInstalled = true;
+            if ($this->moduleName == $module->id) {
+                return true;
+            }
             $modules[$this->moduleName]['params'] = $module->params;
             if (method_exists($module, 'uninstall')) {
                 $module->uninstall($module->id);
             }
             unset($modules[$module->id]);
+        } else {
+            $moduleInstalled = false;
         }
         $modules[$this->moduleName] = [
             'class' => $this->class
         ];
         ConfigManager::put(compact('modules'));
         Yii::configure(Yii::$app, compact('modules'));
-        self::migrate([['module-up', [$this->moduleName]]]);
-        $module = self::getModuleByClassName($this->class);
-        if (method_exists($module, 'install')) {
-            $module->install($this->moduleName);
+        if (!$moduleInstalled) {
+            self::migrate([['module-up', [$this->moduleName]]]);
+            $module = self::getModuleByClassName($this->class);
+            if (method_exists($module, 'install')) {
+                $module->install($this->moduleName);
+            }
         }
     }
 
