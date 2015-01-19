@@ -9,9 +9,7 @@
 namespace bariew\moduleModule\models;
 
 
-use bariew\moduleModule\controllers\ComposerController;
 use bariew\moduleModule\models\HtmlOutput;
-use bariew\moduleModule\Module;
 use Composer\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use yii\data\ArrayDataProvider;
@@ -126,15 +124,14 @@ class Composer extends Item
         register_shutdown_function(function () use ($output) {
             foreach ($output->messages as $key => $message) {
                 if (preg_match('/Exception/', $message)) {
-                    Yii::$app->session->addFlash('error', $output->messages[$key+1]);
+                    Yii::$app->session->setFlash('error', $output->messages[$key+1]);
                 } elseif (preg_match('/Problem.*/', $message)) {
-                    Yii::$app->session->addFlash('error', $message);
+                    Yii::$app->session->setFlash('error', $message);
                 } else {
-                    Yii::$app->session->addFlash('info', $message);
+                    Yii::$app->session->setFlash('info', $message);
                 }
             }
-            $controller = new ComposerController('composer', new Module('module'));
-            echo $controller->actionIndex(false);
+            echo Yii::$app->controller->actionIndex(false);
         });
         return $output;
     }
