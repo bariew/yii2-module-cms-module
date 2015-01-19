@@ -36,6 +36,19 @@ class ItemController extends Controller
         ]);
     }
 
+    /**
+     * Lists all Item models.
+     * @return mixed
+     */
+    public function actionTest()
+    {
+        return $this->render('index', [
+            'dataProvider' =>  new ArrayDataProvider([
+                'allModels' => Item::findAll(), 'key' => 'id'
+            ]),
+        ]);
+    }
+
     public function actionMigrate()
     {
         $actions = [['up', ['all']]];

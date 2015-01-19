@@ -9,30 +9,34 @@
 namespace bariew\moduleModule\models;
 
 
-use bariew\moduleModule\HtmlOutput;
+use bariew\moduleModule\controllers\ComposerController;
+use bariew\moduleModule\models\HtmlOutput;
+use bariew\moduleModule\Module;
 use Composer\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
-use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use Yii;
 
-class Composer extends Model
+class Composer extends Item
 {
-    public $name;
-    public $description;
-    public $downloads;
-    public $url;
-    public $favers;
-    public $repository;
-    public $alias;
-    public $version;
-    public $bootstrap;
+    const ACTION_INSTALL = 0;
+    const ACTION_UPDATE = 1;
+    const ACTION_REMOVE = 2;
+    const ACTION_SKIP = 3;
 
-    public function rules()
+    public static function actionList()
     {
         return [
-            ['name', 'string']
+            self::ACTION_INSTALL => Yii::t('modules/module', 'Install'),
+            self::ACTION_UPDATE => Yii::t('modules/module', 'Update'),
+            self::ACTION_REMOVE => Yii::t('modules/module', 'Remove'),
+            self::ACTION_SKIP => Yii::t('modules/module', 'Skip'),
         ];
+    }
+
+    public function getDefaultAction()
+    {
+        return isset(Yii::$app->extensions[$this->name]) ? self::ACTION_SKIP : null;
     }
 
     public function search($params)
@@ -58,7 +62,7 @@ class Composer extends Model
     }
 
 
-    public static function install($names)
+    public static function installAll($names)
     {
         if (!$names) {
             return true;
@@ -69,29 +73,32 @@ class Composer extends Model
         return self::runComposer([
             'command' => 'require',
             'packages' => $names,
-            '--no-update' => true,
+            '--no-interaction' => true,
+            '--prefer-dist' => true,
         ]);
     }
 
-    public static function update($names)
+    public static function updateAll($names)
     {
         if (!$names) {
             return true;
         }
         return self::runComposer([
             'command' => 'update',
-            'packages' => $names
+            'packages' => $names,
+            '--no-interaction' => true,
         ]);
     }
 
-    public static function remove($names)
+    public static function removeAll($names)
     {
         if (!$names) {
             return true;
         }
         return self::runComposer([
             'command' => 'remove',
-            'packages' => $names
+            'packages' => $names,
+            '--no-interaction' => true,
         ]);
     }
 
@@ -119,15 +126,15 @@ class Composer extends Model
         register_shutdown_function(function () use ($output) {
             foreach ($output->messages as $key => $message) {
                 if (preg_match('/Exception/', $message)) {
-                    Yii::$app->session->setFlash('error', $output->messages[$key+1]);
-                    break;
+                    Yii::$app->session->addFlash('error', $output->messages[$key+1]);
                 } elseif (preg_match('/Problem.*/', $message)) {
-                    Yii::$app->session->setFlash('error', $message);
-                    break;
+                    Yii::$app->session->addFlash('error', $message);
+                } else {
+                    Yii::$app->session->addFlash('info', $message);
                 }
-                Yii::$app->session->setFlash('info', $message);
             }
-            echo Yii::$app->controller->actionIndex();
+            $controller = new ComposerController('composer', new Module('module'));
+            echo $controller->actionIndex(false);
         });
         return $output;
     }

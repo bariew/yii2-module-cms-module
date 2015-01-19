@@ -5,7 +5,7 @@
  * Date: 8/5/14
  * Time: 10:54 AM
  */
-namespace bariew\moduleModule;
+namespace bariew\moduleModule\models;
 use Symfony\Component\Console\Output\StreamOutput;
 class HtmlOutput extends StreamOutput
 {
