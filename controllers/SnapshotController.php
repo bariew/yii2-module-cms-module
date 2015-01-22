@@ -9,7 +9,7 @@ use yii\web\Controller;
 /**
  * ItemController implements the CRUD actions for Item model.
  */
-class ComposerController extends Controller
+class SnapshotController extends Controller
 {
     /**
      * Lists all Item models.

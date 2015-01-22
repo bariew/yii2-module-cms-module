@@ -60,7 +60,7 @@ class Composer extends Item
     }
 
 
-    public static function installAll($names)
+    public static function requireAll($names)
     {
         if (!$names) {
             return true;
@@ -71,6 +71,15 @@ class Composer extends Item
         return self::runComposer([
             'command' => 'require',
             'packages' => $names,
+            '--no-interaction' => true,
+            '--prefer-dist' => true,
+        ]);
+    }
+
+    public static function installAll()
+    {
+        return self::runComposer([
+            'command' => 'install',
             '--no-interaction' => true,
             '--prefer-dist' => true,
         ]);
@@ -127,9 +136,10 @@ class Composer extends Item
                     Yii::$app->session->setFlash('error', $output->messages[$key+1]);
                 } elseif (preg_match('/Problem.*/', $message)) {
                     Yii::$app->session->setFlash('error', $message);
-                } else {
-                    Yii::$app->session->setFlash('info', $message);
                 }
+            }
+            if (!Yii::$app->session->hasFlash('error')) {
+                Yii::$app->session->setFlash('success', Yii::t('modules/module', 'Success!'));
             }
             echo Yii::$app->controller->actionIndex(false);
         });

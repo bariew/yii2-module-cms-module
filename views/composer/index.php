@@ -16,10 +16,14 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?php echo Html::encode($this->title) ?></h1>
     <?php $form = ActiveForm::begin(); ?>
     <?php echo GridView::widget([
-            'dataProvider' => $dataProvider,
+            'dataProvider' => $model->search(Yii::$app->request->post()),
+            'filterModel' => $model,
             'columns' => [
                 'name',
-                'description',
+                [
+                    'attribute' => 'description',
+                    'filter' => false
+                ],
                 [
                     'label' => 'action',
                     'format' => 'raw',
