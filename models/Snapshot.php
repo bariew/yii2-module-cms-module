@@ -8,9 +8,8 @@
 
 namespace bariew\moduleModule\models;
 
-use bariew\moduleModule\Module;
-use yii\console\controllers\MigrateController;
 use yii\db\Query;
+use yii\web\UploadedFile;
 
 class Snapshot
 {
@@ -35,12 +34,17 @@ class Snapshot
         \Yii::$app->end();
     }
 
-    public function extract()
+    public function extract(UploadedFile $file)
     {
-        $this->extractArchive($this->paths);
+        $this->extractArchive($file->tempName, \Yii::getAlias('@app'));
         Composer::installAll();
-        $controller = new MigrateController('migrate', new Module('module'));
-        $controller->actionUp();
+    }
+
+    private function extractArchive($source, $destination)
+    {
+        $zip = new \ZipArchive();
+        $zip->open($source);
+        $zip->extractTo($destination);
     }
 
     private function createMigrations()
