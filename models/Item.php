@@ -201,7 +201,12 @@ class Item extends Model
     {
         $modules = [];
         foreach(Yii::$app->modules as $id => $options) {
-            $module = Yii::$app->getModule($id);
+            try {
+                $module = Yii::$app->getModule($id);
+            } catch (\Exception $e) {
+                continue;
+            }
+
             $modules[get_class($module)] = $module;
         }
         return $modules;

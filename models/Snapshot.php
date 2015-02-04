@@ -9,42 +9,33 @@
 namespace bariew\moduleModule\models;
 
 use yii\db\Query;
-use yii\web\UploadedFile;
 
 class Snapshot
 {
-    private $paths = [
-        'localConfig'  => '@app/config/local/main.php',
-        'migrations'   => '@app/migrations',
-        'modules'      => '@app/modules',
-        'composerJson' => '@app/composer.json',
-        'composerLock' => '@app/composer.lock',
-        'themes'       => '@app/web/themes',
-    ];
+    public function getExcludePaths()
+    {
+        $appDir = basename(\Yii::getAlias('@app'));
+        return [
+            '/'.$appDir.'\/nbproject/',
+            '/'.$appDir.'\/\.git/',
+            '/'.$appDir.'\/\.idea/',
+            '/'.$appDir.'\/vendor/',
+            '/'.$appDir.'\/runtime\/(?!\.gitignore)/',
+            '/'.$appDir.'\/web\/assets\/(?!\.gitignore)/',
+            '/'.$appDir.'\/web\/files\/(?!\.gitignore)/',
+        ];
+    }
 
-    private $archivePath = '@app/runtime/snapshot.zip';
+    public $archivePath = '@app/runtime/snapshot.zip';
 
     public function compact()
     {
         $path = \Yii::getAlias($this->archivePath);
         $this->createMigrations()
-            ->createArchive($this->paths);
+            ->createArchive(\Yii::getAlias('@app'), $this->getExcludePaths());
         \Yii::$app->response->sendFile($path, 'snapshot_' . date('Y-m-d') . '.zip');
         unlink($path);
         \Yii::$app->end();
-    }
-
-    public function extract(UploadedFile $file)
-    {
-        $this->extractArchive($file->tempName, \Yii::getAlias('@app'));
-        Composer::installAll();
-    }
-
-    private function extractArchive($source, $destination)
-    {
-        $zip = new \ZipArchive();
-        $zip->open($source);
-        $zip->extractTo($destination);
     }
 
     private function createMigrations()
@@ -57,7 +48,7 @@ class Snapshot
             $result[$table] = (new Query())->from([$table])->all();
         }
         $name = 'm' . gmdate('ymd_His') . '_snapshot';
-        $file = \Yii::getAlias($this->paths['migrations']) . DIRECTORY_SEPARATOR . $name . '.php';
+        $file = \Yii::getAlias('@app/migrations') . DIRECTORY_SEPARATOR . $name . '.php';
         $content = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'snapshot_migration_template.php');
         $content = str_replace(['{{name}}', '{{data}}'], [$name, var_export($result, true)], $content);
         file_put_contents($file, '<?php ' . $content);
@@ -65,25 +56,15 @@ class Snapshot
     }
 
     /**
-     * @param $paths
+     * @param $path
+     * @param $exclude
      * @return $this
      */
-    private function createArchive($paths)
+    private function createArchive($path, $exclude)
     {
         $zip = new \ZipArchive();
         $zip->open(\Yii::getAlias($this->archivePath), \ZipArchive::CREATE);
-        foreach ($paths as $alias) {
-            $path = \Yii::getAlias($alias);
-            if (is_file($path)) {
-                $innerPath = str_replace([
-                    \Yii::getAlias('@app'),
-                    DIRECTORY_SEPARATOR . basename($path)
-                ], ['', ''], $path);
-            } else {
-                $innerPath = '';
-            }
-            $this->zipRecursive($zip, $path, $innerPath);
-        }
+        $this->zipRecursive($zip, $path, '', $exclude);
         return $this;
     }
 
@@ -92,13 +73,19 @@ class Snapshot
      * @param \ZipArchive $zip
      * @param $src
      * @param string $innerPath
+     * @param array $exclude
      * @return bool
      */
-    private function zipRecursive(\ZipArchive $zip, $src, $innerPath = '')
+    private function zipRecursive(\ZipArchive $zip, $src, $innerPath = '', $exclude = [])
     {
         $localName = $innerPath
             ? $innerPath . DIRECTORY_SEPARATOR . basename($src)
             : basename($src);
+        foreach ($exclude as $pattern) {
+            if (preg_match($pattern, $localName)) {
+                return true;
+            }
+        }
         if (is_file($src)) {
             return $zip->addFile($src, $localName);
         }
@@ -107,7 +94,7 @@ class Snapshot
             if (in_array($file, ['.', '..'])) {
                 continue;
             }
-            $this->zipRecursive($zip, $src . DIRECTORY_SEPARATOR . $file, $localName);
+            $this->zipRecursive($zip, $src . DIRECTORY_SEPARATOR . $file, $localName, $exclude);
         }
     }
 } 

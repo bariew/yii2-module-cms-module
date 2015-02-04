@@ -82,6 +82,7 @@ class Composer extends Item
             'command' => 'install',
             '--no-interaction' => true,
             '--prefer-dist' => true,
+            '' => true,
         ]);
     }
 
