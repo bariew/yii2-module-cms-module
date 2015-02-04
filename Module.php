@@ -21,6 +21,10 @@ class Module extends \yii\base\Module
                     'label' => 'Modules',
                     'url' => ['/module/item/index'],
                 ],
+                [
+                    'label' => 'Snapshot',
+                    'url' => ['/module/snapshot/create'],
+                ],
             ]
         ],
         'menuOrder' => ''

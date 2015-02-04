@@ -52,6 +52,7 @@ class Snapshot
         $content = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'snapshot_migration_template.php');
         $content = str_replace(['{{name}}', '{{data}}'], [$name, var_export($result, true)], $content);
         file_put_contents($file, '<?php ' . $content);
+        chmod($file, 0777);
         return $this;
     }
 

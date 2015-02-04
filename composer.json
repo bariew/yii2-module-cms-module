@@ -11,8 +11,6 @@
         }
     ],
     "require"   : {
-        "symfony/console": "2.3",
-        "composer/composer": "~1.0@dev",
         "bariew/yii2-module-migration-controller"   : "1.*",
         "bariew/yii2-dropdown-x": "dev-master"
     },
