@@ -3,6 +3,7 @@
 namespace bariew\moduleModule\models;
 
 use app\config\ConfigManager;
+use bariew\moduleMigration\ModuleMigrateController;
 use bariew\moduleMigration\ModuleMigration;
 use bariew\moduleModule\Module;
 use Yii;
@@ -96,24 +97,24 @@ class Item extends Model
 
     public function install()
     {
-        $modules = ConfigManager::getData()['modules'];
+        $config = ['class' => $this->class];
+        $modules = Yii::$app->modules;
         if ($module = self::getModuleByClassName($this->class)) {
             $moduleInstalled = true;
             if ($this->moduleName == $module->id) {
                 return true;
             }
-            $modules[$this->moduleName]['params'] = $module->params;
+            $config['params'] = $module->params;
             if (method_exists($module, 'uninstall')) {
                 $module->uninstall($module->id);
             }
             unset($modules[$module->id]);
+            ConfigManager::remove(['modules', $module->id], $config);
         } else {
             $moduleInstalled = false;
         }
-        $modules[$this->moduleName] = [
-            'class' => $this->class
-        ];
-        ConfigManager::put(compact('modules'));
+        ConfigManager::set(['modules', $this->moduleName], $config);
+        $modules[$this->moduleName] = $config;
         Yii::configure(Yii::$app, compact('modules'));
         if (!$moduleInstalled) {
             self::migrate([['module-up', [$this->moduleName]]]);
@@ -132,10 +133,12 @@ class Item extends Model
         if (method_exists($module, 'uninstall')) {
             $module->uninstall($this->moduleName);
         }
-        $config = ConfigManager::getData();
+        $config = ConfigManager::getWriteData();
         unset($config['modules'][$this->moduleName]);
         $config['bootstrap'] = array_diff($config['bootstrap'], [$this->moduleName]);
-        ConfigManager::put($config);
+        ConfigManager::remove(['modules', $this->moduleName]);
+        ConfigManager::put(['bootstrap' => array_unique($config['bootstrap'])]);
+
         self::migrate([['module-down', [$this->moduleName]]]);
     }
 
@@ -147,7 +150,7 @@ class Item extends Model
         /**
          * @var MigrateController $controller
          */
-        $controller = new ModuleMigration('migrate', self::getModuleByClassName(Module::className()));
+        $controller = new ModuleMigrateController('migrate', self::getModuleByClassName(Module::className()));
         $controller->interactive = false;
         ob_start();
         defined('STDOUT') or define ('STDOUT', 'php://stdout');
