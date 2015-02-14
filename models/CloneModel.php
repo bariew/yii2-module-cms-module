@@ -1,20 +1,40 @@
 <?php
-
+/**
+ * CloneModel class file.
+ * @copyright (c) 2014, bariew
+ * @license http://www.opensource.org/licenses/bsd-license.php
+ */
 namespace bariew\moduleModule\models;
 
-use app\config\ConfigManager;
-use bariew\moduleMigration\ModuleMigration;
-use bariew\moduleModule\Module;
 use Yii;
 use yii\base\Model;
-use yii\console\controllers\MigrateController;
 use yii\helpers\FileHelper;
 
+/**
+ * This model is for cloning modules.
+ * E.g. you have module installed in /vendor folder
+ * and you want to extend its behavior with new module - 
+ * you can just clone it into @app/modules/yourNewModule folder.
+ * All classes in your new module will be empty classes extending original ones 
+ * (you may place there your new content or not - it already works).
+ * 
+ * @author Pavel Bariev <bariew@yandex.ru>
+ */
 class CloneModel extends Model
 {
+    /**
+     * @var string yii2 path alias to original module folder.
+     */
     public $source;
+    
+    /**
+     * @var string yii2 path alias to target module folder.
+     */
     public $destination;
 
+    /**
+     * @inheritdoc
+     */
     public function rules()
     {
         return [
@@ -22,6 +42,9 @@ class CloneModel extends Model
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
     public function attributeLabels()
     {
         return [
@@ -30,6 +53,21 @@ class CloneModel extends Model
         ];
     }
     
+    /**
+     * Gets module cloning done.
+     * @return boolean 
+     */
+    public function run()
+    {
+        return $this->copy() && $this->clear() ;
+        
+    }
+    
+    /**
+     * Searches all path aliases.
+     * @param string $query search string started with @
+     * @return array found system path aliases matching search query.
+     */
     public static function findAliases($query)
     {
         $result = [];
@@ -54,13 +92,10 @@ class CloneModel extends Model
         return $result;
     }
     
-    public function run()
-    {
-        return $this->copy()
-                ->clear() ;
-        
-    }
-    
+    /**
+     * Copies orihinal module files to destination folder.
+     * @return boolean
+     */
     private function copy()
     {
         $source = Yii::getAlias($this->source);
@@ -69,14 +104,18 @@ class CloneModel extends Model
             return false;
         }
         $destination = Yii::getAlias($this->destination);
-//        if (file_exists($destination) && FileHelper::findFiles($destination)) {
-//            $this->addError('destination', Yii::t('modules/module', 'Destination directory is not empty'));
-//            return false;
-//        }
+        if (file_exists($destination)) {
+            $this->addError('destination', Yii::t('modules/module', 'Destination directory already exists'));
+            return false;
+        }
         FileHelper::copyDirectory($source, $destination);
-        return $this;
+        return true;
     }
     
+    /**
+     * Relaces all new module classes content with empty template.
+     * @return boolean
+     */
     private function clear()
     {
         $destination = Yii::getAlias($this->destination);
@@ -104,5 +143,6 @@ class CloneModel extends Model
             );
             file_put_contents($path, $classContent);
         }
+        return true;
     }
 }

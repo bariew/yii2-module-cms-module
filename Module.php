@@ -19,11 +19,20 @@ class Module extends \yii\base\Module
             'items' => [
                 [
                     'label' => 'Modules',
-                    'url' => ['/module/item/index'],
-                ],
-                [
-                    'label' => 'Snapshot',
-                    'url' => ['/module/snapshot/create'],
+                    'items' => [
+                        [
+                            'label' => 'List',
+                            'url' => ['/module/item/index'],                            
+                        ],
+                        [
+                            'label' => 'Clone',
+                            'url' => ['/module/clone/create'],
+                        ],
+                        [
+                            'label' => 'Snapshot',
+                            'url' => ['/module/snapshot/create'],
+                        ],
+                    ]
                 ],
             ]
         ],
