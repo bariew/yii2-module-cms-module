@@ -21,22 +21,9 @@ class CloneController extends Controller
         return $this->render('create', compact('model'));
     }
 
-    public function actionPaths($query)
+    public function actionAliases($query)
     {
-        $s = DIRECTORY_SEPARATOR;
         Yii::$app->response->format = Response::FORMAT_JSON;
-        if (preg_match('/.+'.preg_quote($s, '/').'$/', $query)) {
-            $query .= 'file'; // added random string for getting dir content of query with '/' in the end.
-        }
-        $path = Yii::getAlias('@app/'. dirname($query))  . $s;
-        $result = array_diff(scandir($path), ['.', '..']);
-        foreach ($result as $key => $dir) {
-            $result[$key] = dirname($query) . $s . $dir;
-            if (!is_dir($path . $s . $dir)) {
-                unset ($result[$key]);
-            }
-        }
-
-        return array_values($result);
+        return CloneModel::findAliases($query);
     }
 }

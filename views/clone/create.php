@@ -20,15 +20,16 @@ $this->title = Yii::t('modules/module', 'Clone module');
     <div class="module-form">
         <?php $form = ActiveForm::begin(); ?>
         <?php $request = new \yii\web\JsExpression('function (request, response) {
-            jQuery.get("'.\yii\helpers\Url::toRoute(['paths']).'", {
+            jQuery.get("'.\yii\helpers\Url::toRoute(['aliases']).'", {
                 query: request.term
-            }, function (data) {
-                response(data);
-            });
+            }, function (data) { response(data); });
         }'); ?>
         <?php echo $form->field($model, 'source')->widget(\yii\jui\AutoComplete::className(), [
             'model' => $model,
             'attribute' => 'source',
+            'options' => [ 
+                'class' => 'form-control'
+            ],
             'clientOptions' => [
                 'source' => $request,
                 'minLength' => 3,
@@ -37,11 +38,15 @@ $this->title = Yii::t('modules/module', 'Clone module');
         <?php echo $form->field($model, 'destination')->widget(\yii\jui\AutoComplete::className(), [
             'model' => $model,
             'attribute' => 'destination',
+            'options' => [ 
+                'class' => 'form-control'
+            ],
             'clientOptions' => [
                 'source' => $request,
                 'minLength' => 3,
             ],
-        ]); ?>        <div class="form-group">
+        ]); ?>        
+        <div class="form-group">
             <?php echo Html::submitButton(Yii::t('modules/module', 'Save'), ['class' => 'btn btn-primary']) ?>
         </div>
         <?php ActiveForm::end(); ?>
