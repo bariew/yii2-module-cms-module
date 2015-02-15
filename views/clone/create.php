@@ -2,13 +2,11 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
-use bariew\moduleModule\models\Param;
+use bariew\moduleModule\models\CloneModel;
 
 /**
  * @var yii\web\View $this
- * @var Param $model
- * @var yii\web\View $this
- * @var bariew\moduleModule\models\CloneModel $model
+ * @var CloneModel $model
  * @var yii\widgets\ActiveForm $form
  */
 
@@ -32,7 +30,7 @@ $this->title = Yii::t('modules/module', 'Clone module');
             ],
             'clientOptions' => [
                 'source' => $request,
-                'minLength' => 3,
+                'minLength' => 1,
             ],
         ]); ?>
         <?php echo $form->field($model, 'destination')->widget(\yii\jui\AutoComplete::className(), [
@@ -43,7 +41,7 @@ $this->title = Yii::t('modules/module', 'Clone module');
             ],
             'clientOptions' => [
                 'source' => $request,
-                'minLength' => 3,
+                'minLength' => 1,
             ],
         ]); ?>        
         <div class="form-group">

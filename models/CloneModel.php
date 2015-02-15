@@ -39,6 +39,7 @@ class CloneModel extends Model
     {
         return [
             [['source', 'destination'], 'required'],
+            ['source', 'in', 'range' => self::aliasList()]
         ];
     }
 
@@ -64,32 +65,32 @@ class CloneModel extends Model
     }
     
     /**
+     * System path aliases list.
+     * @return array available aslias list.
+     */
+    public static function aliasList()
+    {
+        $result = [];
+        foreach (\Yii::$aliases as $alias => $data) {
+            if (is_array($data)) {
+                $result = array_merge($result, array_keys($data));
+            } else {
+                $result[] = $alias;
+            }
+        }
+        asort($result);
+        return array_values($result);
+    }
+    /**
      * Searches all path aliases.
      * @param string $query search string started with @
      * @return array found system path aliases matching search query.
      */
     public static function findAliases($query)
     {
-        $result = [];
-        foreach (\Yii::$aliases as $alias => $data) {
-            if (strpos($alias, $query) === 0) {
-                $result[] = $alias . '/'; // e.g query '@bar' matches alias '@bariew'
-                continue;
-            } else if (strpos($query, $alias) !== 0) {
-                continue;
-            } else if (($query == $alias . '/') && is_array($data)) {
-                return array_keys($data); // e.g. query @bariew/ matches '@bariew/*' alias children
-            } else if (!is_array($data)) {
-                $result[] = $alias . '/'; 
-                continue; 
-            }
-            foreach (array_keys($data) as $alias) {
-                if (strpos($alias, $query) === 0) {
-                    $result[] = $alias;
-                }
-            }       
-        }
-        return $result;
+        $query = '@' . str_replace('@', '', $query);
+        $pattern = '/' . preg_quote($query, '/') . '/';
+        return preg_grep($pattern, self::aliasList());
     }
     
     /**
