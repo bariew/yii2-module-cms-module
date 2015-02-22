@@ -40,7 +40,19 @@ $this->params['breadcrumbs'][] = $this->title;
                         if ($data->class == \bariew\moduleModule\Module::className()) {
                             $attributes['onclick'] = 'if (!confirm("'. Yii::t('modules/module', "This module is critically important") .'")){return false;} ';
                         }
-                        return Html::checkbox("Item[{$data->id}][installed]", $data->installed, $attributes);
+                        return 
+                            ($data->isInstalled()
+                                ? Html::a(
+                                    '<span class="glyphicon glyphicon-wrench"></span>',
+                                    ['params', 'id' => $data->id],
+                                    ['class' => 'pull-right']
+                                )
+                                : "")
+                            . Html::checkbox(
+                                "Item[{$data->id}][installed]", 
+                                $data->installed, 
+                                $attributes
+                            );
                     },
                 ],
             ],

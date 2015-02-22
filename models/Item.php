@@ -215,6 +215,10 @@ class Item extends Model
         return $modules;
     }
 
+    public function isInstalled()
+    {
+        return self::getModuleByClassName($this->class);
+    }
     /**
      * @param $class
      * @return \yii\base\Module
