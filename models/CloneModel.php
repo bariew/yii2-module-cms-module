@@ -109,7 +109,7 @@ class CloneModel extends Model
             $this->addError('destination', Yii::t('modules/module', 'Destination directory already exists'));
             return false;
         }
-        FileHelper::copyDirectory($source, $destination);
+        FileHelper::copyDirectory($source, $destination, ['fileMode' => 0775]);
         return true;
     }
     
@@ -142,7 +142,7 @@ class CloneModel extends Model
                 [$fileNamespace, $className, $oldClassName], 
                 $template
             );
-            file_put_contents($path, $classContent);
+            file_put_contents($path, "<?php " . $classContent);
         }
         return true;
     }

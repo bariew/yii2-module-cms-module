@@ -1,5 +1,4 @@
-<?php
 
 namespace $namespace;
 
-class $class extends $oldclass {}
+class $class extends \$oldclass {}

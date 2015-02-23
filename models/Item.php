@@ -4,7 +4,6 @@ namespace bariew\moduleModule\models;
 
 use app\config\ConfigManager;
 use bariew\moduleMigration\ModuleMigrateController;
-use bariew\moduleMigration\ModuleMigration;
 use bariew\moduleModule\Module;
 use Yii;
 use yii\base\Model;
@@ -196,7 +195,39 @@ class Item extends Model
             ]);
             $result[$class] = $config;
         }
+        $result = array_merge($result, self::localModuleList());
         ksort($result);
+        return $result;
+    }
+    
+    public static function localModuleList()
+    {
+        $result = [];
+        $dir = Yii::getAlias('@app/modules');
+        if (!file_exists($dir)) {
+            return $result;
+        }
+        $modules = self::moduleList();
+        $localModules = array_diff(scandir($dir), ['.', '..']);
+        foreach ($localModules as $moduleName) {
+            $basePath = $dir . DIRECTORY_SEPARATOR . $moduleName;
+            if (!is_dir($basePath)) {
+                continue;
+            }
+            $moduleName = basename($basePath);
+            $class = "app\\modules\\{$moduleName}\\Module"; 
+            $result[$class] = [
+                'id'         => $class,
+                'installed'  => isset($modules[$class]),
+                'name'       => $moduleName,
+                'moduleName' => $moduleName,
+                'class'      => $class,
+                'basePath'   => $basePath,
+                'alias'      => "@app/modules/{$moduleName}",
+                'params'     => isset($modules[$class]) ? $modules[$class]->params : [],
+                'description'=> ""                
+            ];
+        }
         return $result;
     }
 
