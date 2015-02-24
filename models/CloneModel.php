@@ -109,7 +109,10 @@ class CloneModel extends Model
             $this->addError('destination', Yii::t('modules/module', 'Destination directory already exists'));
             return false;
         }
-        FileHelper::copyDirectory($source, $destination, ['fileMode' => 0775]);
+        FileHelper::copyDirectory($source, $destination, [
+            'except' => ['.git/'],
+            'fileMode' => 0775
+        ]);
         return true;
     }
     
