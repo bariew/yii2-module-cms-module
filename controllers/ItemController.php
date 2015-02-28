@@ -2,7 +2,6 @@
 
 namespace bariew\moduleModule\controllers;
 
-use bariew\configModule\models\Params;
 use bariew\moduleModule\models\Item;
 use bariew\moduleModule\models\Param;
 use Yii;
@@ -60,7 +59,7 @@ class ItemController extends Controller
             'brandLabel' => Yii::$app->name,
             'brandUrl' => Yii::$app->homeUrl,
             'options' => [
-                'class' => 'navbar-inverse navbar-fixed-top',
+                'class' => 'navbar-inverse',
             ],
         ]);
         echo MenuWidget::widget([
