@@ -43,7 +43,8 @@ $this->title = Yii::t('modules/module', 'Clone module');
                 'source' => $request,
                 'minLength' => 1,
             ],
-        ]); ?>        
+        ]); ?>
+        <?= $form->field($model, 'replace')->dropDownList($model::replaceList()); ?>
         <div class="form-group">
             <?php echo Html::submitButton(Yii::t('modules/module', 'Save'), ['class' => 'btn btn-primary']) ?>
         </div>

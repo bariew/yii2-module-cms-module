@@ -60,6 +60,7 @@ class ItemController extends Controller
             'brandUrl' => Yii::$app->homeUrl,
             'options' => [
                 'class' => 'navbar-inverse',
+                'style' => 'z-index: 9999;'
             ],
         ]);
         echo MenuWidget::widget([

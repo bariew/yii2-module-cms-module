@@ -26,7 +26,17 @@ class CloneModel extends Model
      * @var string yii2 path alias to original module folder.
      */
     public $source;
-    
+
+    /**
+     * @var int whether to replace existing files while cloning.
+     */
+    public $replace = 0;
+
+    /**
+     * @var array files not to change.
+     */
+    private $keepFiles = [];
+
     /**
      * @var string yii2 path alias to target module folder.
      */
@@ -39,7 +49,8 @@ class CloneModel extends Model
     {
         return [
             [['source', 'destination'], 'required'],
-            ['source', 'in', 'range' => self::aliasList()]
+            ['source', 'in', 'range' => self::aliasList()],
+            ['replace', 'in', 'range' => array_keys(self::replaceList())],
         ];
     }
 
@@ -50,7 +61,8 @@ class CloneModel extends Model
     {
         return [
             'source'  => Yii::t('modules/module', 'Clone source'),
-            'destination'       => Yii::t('modules/module', 'Clone destination'),
+            'destination'   => Yii::t('modules/module', 'Clone destination'),
+            'replace'       => Yii::t('modules/module', 'Replace existing files'),
         ];
     }
     
@@ -63,10 +75,22 @@ class CloneModel extends Model
         return $this->copy() && $this->clear() ;
         
     }
-    
+
+    /**
+     * Available values for 'replace' attribute.
+     * @return array
+     */
+    public static function replaceList()
+    {
+        return [
+            0 => Yii::t('modules/module', 'No'),
+            1 => Yii::t('modules/module', 'Yes'),
+        ];
+    }
+
     /**
      * System path aliases list.
-     * @return array available aslias list.
+     * @return array available alias list.
      */
     public static function aliasList()
     {
@@ -81,6 +105,7 @@ class CloneModel extends Model
         asort($result);
         return array_values($result);
     }
+
     /**
      * Searches all path aliases.
      * @param string $query search string started with @
@@ -94,7 +119,7 @@ class CloneModel extends Model
     }
     
     /**
-     * Copies orihinal module files to destination folder.
+     * Copies original module files to destination folder.
      * @return boolean
      */
     private function copy()
@@ -105,19 +130,22 @@ class CloneModel extends Model
             return false;
         }
         $destination = Yii::getAlias($this->destination);
-        if (file_exists($destination)) {
-            $this->addError('destination', Yii::t('modules/module', 'Destination directory already exists'));
-            return false;
-        }
         FileHelper::copyDirectory($source, $destination, [
             'except' => ['.git/'],
-            'fileMode' => 0775
+            'fileMode' => 0775,
+            'beforeCopy' => function ($from, $to) {
+                if ($this->replace || !file_exists($to) || !is_file($to)) {
+                    return true;
+                }
+                $this->keepFiles[] = $to;
+                return false;
+            }
         ]);
         return true;
     }
-    
+
     /**
-     * Relaces all new module classes content with empty template.
+     * Replaces all new module classes content with empty template.
      * @return boolean
      */
     private function clear()
@@ -127,9 +155,12 @@ class CloneModel extends Model
         $oldNamespace = str_replace(['@', '/'], ['', '\\'], $this->source);
         $template = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'clone_template');
         foreach (FileHelper::findFiles($destination) as $path) {
+            if (!$this->replace && in_array($path, $this->keepFiles)) {
+                continue;
+            }
             $content = str_replace($oldNamespace, $newNamespace, file_get_contents($path));
             file_put_contents($path, $content);
-            if (!preg_match('/^.*\W([A-Z]\w+)\.php/', $path, $matches)) {
+            if (!preg_match('/^.*\W([A-Z]\w+)\.php/', $path, $matches)) { // Class file.
                 continue;
             }
             $className = $matches[1];
