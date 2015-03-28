@@ -36,6 +36,7 @@ class Module extends \yii\base\Module
                 ],
             ]
         ],
-        'menuOrder' => ''
+        'menuOrder' => '',
+        'enableMenu' => 1
     ];
 }

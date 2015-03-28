@@ -31,7 +31,9 @@ class ModuleBootstrap implements BootstrapInterface
             return true;
         }
         $app->controllerMap['migrate'] = 'bariew\moduleMigration\ModuleMigration';
-        if ($app instanceof Application) {
+        $menuEnabled = $app instanceof Application 
+            && Item::getModuleByClassName(Module::className())->params['enableMenu'];
+        if ($menuEnabled) {
             $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
                 $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
             });
