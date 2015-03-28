@@ -170,6 +170,9 @@ class Item extends Model
 
         foreach (Yii::$app->extensions as $name => $config) {
             $alias = key($config['alias']);
+            if (!file_exists(Yii::getAlias($alias . '/composer.json'))) {
+                continue;
+            }
             $composerData = json_decode(file_get_contents(Yii::getAlias($alias . '/composer.json')), true);
             if (!in_array($name, $knownModules) && (!isset($composerData['keywords']) || array_diff($keywords, $composerData['keywords']))) {
                 continue;
