@@ -32,7 +32,7 @@ class ModuleBootstrap implements BootstrapInterface
         }
         $app->controllerMap['migrate'] = 'bariew\moduleMigration\ModuleMigration';
         $menuEnabled = $app instanceof Application 
-            && Item::getModuleByClassName(Module::className())->params['enableMenu'];
+            && $app->getModule('module')->params['enableMenu'];
         if ($menuEnabled) {
             $app->on(Application::EVENT_BEFORE_REQUEST, function () use ($app) {
                 $app->getView()->on(View::EVENT_BEGIN_BODY, [$this, 'renderMenu']);
@@ -46,9 +46,8 @@ class ModuleBootstrap implements BootstrapInterface
         if (Yii::$app->getRequest()->getIsAjax()) {
             return true;
         }
-        $module = Item::getModuleByClassName(Module::className());
         try {
-            $controller = new ItemController('item', $module);
+            $controller = new ItemController('item', \Yii::$app->getModule('module'));
             return $controller->runAction('menu');
         } catch (\Exception $e) {}
     }
