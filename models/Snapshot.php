@@ -8,10 +8,53 @@
 
 namespace bariew\moduleModule\models;
 
+use yii\base\Model;
 use yii\db\Query;
 
-class Snapshot
+class Snapshot extends Model
 {
+    public $onlyMigration = true;
+    public $tables;
+
+    public $archivePath = '@app/runtime/snapshot.zip';
+
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        parent::init();
+        $this->tables = array_diff(self::tableList(), ['migration']);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        return [
+            [['onlyMigration'], 'boolean'],
+            [['tables'], 'safe']
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            'onlyMigration' => \Yii::t('modules/module', 'Migrations only'),
+            'tables' => \Yii::t('modules/module', 'Migration tables'),
+        ];
+    }
+
+    public static function tableList()
+    {
+        $tables = \Yii::$app->db->schema->getTableNames();
+        return array_combine($tables, $tables);
+    }
+
     public function getExcludePaths()
     {
         $appDir = basename(\Yii::getAlias('@app'));
@@ -26,13 +69,15 @@ class Snapshot
         ];
     }
 
-    public $archivePath = '@app/runtime/snapshot.zip';
 
     public function compact()
     {
         $path = \Yii::getAlias($this->archivePath);
-        $this->createMigrations()
-            ->createArchive(\Yii::getAlias('@app'), $this->getExcludePaths());
+        $this->createMigrations();
+        if ($this->onlyMigration) {
+            return true;
+        }
+        $this->createArchive(\Yii::getAlias('@app'), $this->getExcludePaths());
         \Yii::$app->response->sendFile($path, 'snapshot_' . date('Y-m-d') . '.zip');
         unlink($path);
         \Yii::$app->end();
@@ -41,15 +86,13 @@ class Snapshot
     private function createMigrations()
     {
         $result = [];
-        foreach (\Yii::$app->db->schema->getTableNames() as $table) {
-            if ($table == 'migration') {
-                continue;
-            }
+        foreach ($this->tables as $table) {
             $result[$table] = (new Query())->from([$table])->all();
         }
         $name = 'm' . gmdate('ymd_His') . '_snapshot';
         $file = \Yii::getAlias('@app/migrations') . DIRECTORY_SEPARATOR . $name . '.php';
-        $content = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'snapshot_migration_template.php');
+        $content = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR
+            . 'templates' . DIRECTORY_SEPARATOR . 'snapshot_migration_template');
         $content = str_replace(['{{name}}', '{{data}}'], [$name, var_export($result, true)], $content);
         file_put_contents($file, '<?php ' . $content);
         chmod($file, 0777);

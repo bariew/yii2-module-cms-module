@@ -151,33 +151,49 @@ class CloneModel extends Model
     private function clear()
     {
         $destination = Yii::getAlias($this->destination);
-        $newNamespace = str_replace(['@', '/'], ['', '\\'], $this->destination);
-        $oldNamespace = str_replace(['@', '/'], ['', '\\'], $this->source);
-        $template = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'clone_template');
         foreach (FileHelper::findFiles($destination) as $path) {
             if (!$this->replace && in_array($path, $this->keepFiles)) {
                 continue;
             }
-            $content = str_replace($oldNamespace, $newNamespace, file_get_contents($path));
-            file_put_contents($path, $content);
-            if (!preg_match('/^.*\W([A-Z]\w+)\.php/', $path, $matches)) { // Class file.
+            if (!preg_match('/^.*\.php$/', $path, $matches)) { // php file.
                 continue;
+            }else if (preg_match('/^.*\W([A-Z]\w+)\.php$/', $path, $matches)) { // Class file.
+                $content = $this->createClassContent($matches[1], $path);
+            } else {
+                $content = $this->creteFileContent($path);
             }
-            $className = $matches[1];
-            $addedNamespace = str_replace(
-                [$destination, DIRECTORY_SEPARATOR . $className .'.php', '/'], 
-                ['', '', '\\'], 
-                $path
-            );
-            $fileNamespace = $newNamespace . $addedNamespace; 
-            $oldClassName = $oldNamespace . $addedNamespace . '\\' . $className;
-            $classContent = str_replace(
-                ['$namespace', '$class', '$oldclass'], 
-                [$fileNamespace, $className, $oldClassName], 
-                $template
-            );
-            file_put_contents($path, "<?php " . $classContent);
+            file_put_contents($path, "<?php " . $content);
         }
         return true;
+    }
+
+    protected function createClassContent($className, $path)
+    {
+        $destination = Yii::getAlias($this->destination);
+        $newNamespace = str_replace(['@', '/'], ['', '\\'], $this->destination);
+        $oldNamespace = str_replace(['@', '/'], ['', '\\'], $this->source);
+        $template = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR .
+            'templates' .DIRECTORY_SEPARATOR . 'class_clone_template');
+        $addedNamespace = str_replace(
+            [$destination, DIRECTORY_SEPARATOR . $className .'.php', '/'],
+            ['', '', '\\'],
+            $path
+        );
+        $fileNamespace = $newNamespace . $addedNamespace;
+        $oldClassName = $oldNamespace . $addedNamespace . '\\' . $className;
+        return str_replace(
+            ['$namespace', '$class', '$oldClass'],
+            [$fileNamespace, $className, $oldClassName],
+            $template
+        );
+    }
+
+    protected function creteFileContent($path)
+    {
+        $template = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR .
+            'templates' .DIRECTORY_SEPARATOR . 'file_clone_template');
+        $pathEnd = str_replace(Yii::getAlias($this->destination), '', $path);
+        $oldFile = $this->source . str_replace('\\', '/', $pathEnd);
+        return str_replace('$oldFile', $oldFile, $template);
     }
 }

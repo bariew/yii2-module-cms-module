@@ -8,10 +8,8 @@
 namespace bariew\moduleModule;
 
 use bariew\moduleModule\controllers\ItemController;
-use bariew\moduleModule\models\Item;
 use Yii;
 use yii\base\BootstrapInterface;
-use yii\helpers\FileHelper;
 use \yii\web\Application;
 use yii\web\View;
 
@@ -27,7 +25,7 @@ class ModuleBootstrap implements BootstrapInterface
      */
     public function bootstrap($app)
     {
-        if (!$module = Item::getModuleByClassName(Module::className())) {
+        if (!$app->hasModule('module')) {
             return true;
         }
         $app->controllerMap['migrate'] = 'bariew\moduleMigration\ModuleMigration';

@@ -2,12 +2,9 @@
 
 namespace bariew\moduleModule\controllers;
 
-use bariew\moduleMigration\ModuleMigrateController;
-use bariew\moduleModule\Module;
 use bariew\moduleModule\models\Snapshot;
 use Yii;
 use yii\web\Controller;
-use yii\web\UploadedFile;
 
 /**
  * SnapshotController implements the CRUD actions for Snapshot model.
@@ -16,6 +13,10 @@ class SnapshotController extends Controller
 {
     public function actionCreate()
     {
-        return (new Snapshot())->compact();
+        $model = new Snapshot();
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            return (new Snapshot())->compact() && $this->goBack();
+        }
+        return $this->render('create', compact('model'));
     }
 }

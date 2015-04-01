@@ -8,10 +8,10 @@ class {{name}} extends Migration
     public function up()
     {
         if ($this->db->schema instanceof yii\db\mysql\Schema) {
-            $this->db->createCommand("SET FOREIGN_KEY_CHECKS = 0");
+            $this->db->createCommand("SET FOREIGN_KEY_CHECKS = 0")->execute();
         }
         foreach ($this->tables as $table => $data) {
-            $this->db->createCommand()->truncateTable($table);
+            $this->db->createCommand("DELETE FROM $table")->execute();
             if (!$data) {
                 continue;
             }
@@ -20,7 +20,7 @@ class {{name}} extends Migration
             $this->db->createCommand()->batchInsert($table, $columns, $data)->execute();
         }
         if ($this->db->schema instanceof yii\db\mysql\Schema) {
-            $this->db->createCommand("SET FOREIGN_KEY_CHECKS = 1");
+            $this->db->createCommand("SET FOREIGN_KEY_CHECKS = 1")->execute();
         }
         return true;
     }
