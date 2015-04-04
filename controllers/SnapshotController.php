@@ -15,7 +15,7 @@ class SnapshotController extends Controller
     {
         $model = new Snapshot();
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            return (new Snapshot())->compact() && $this->goBack();
+            return $model->compact() && $this->goBack();
         }
         return $this->render('create', compact('model'));
     }

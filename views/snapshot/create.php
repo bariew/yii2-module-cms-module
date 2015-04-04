@@ -19,9 +19,10 @@ $this->title = Yii::t('modules/module', 'Clone module');
         <?php $form = ActiveForm::begin(); ?>
         <?php echo $form->field($model, 'tables')->checkboxList($model::tableList(), [
             'item' => function ($index, $label, $name, $checked, $value){
-                $checked = $checked ? 'checked=1 ' : '';
+                $checked = $checked ? 'checked=""' : '';
                 return "<li><label><input type='checkbox' name='$name' $checked value='$value' />$label</label></li>";
-        }]) ?>
+        }
+        ]) ?>
         <?= $form->field($model, 'onlyMigration')->checkbox(); ?>
         <div class="form-group">
             <?php echo Html::submitButton(Yii::t('modules/module', 'Save'), ['class' => 'btn btn-primary']) ?>
