@@ -130,15 +130,14 @@ class CloneModel extends Model
             return false;
         }
         $destination = Yii::getAlias($this->destination);
+        if (!$this->replace) { // if replace is disabled we will skip existing files
+            $this->keepFiles = FileHelper::findFiles($destination);
+        }
         FileHelper::copyDirectory($source, $destination, [
             'except' => ['.git/'],
             'fileMode' => 0775,
             'beforeCopy' => function ($from, $to) {
-                if ($this->replace || !file_exists($to) || !is_file($to)) {
-                    return true;
-                }
-                $this->keepFiles[] = $to;
-                return false;
+                return $this->replace || !file_exists($to) || !is_file($to);
             }
         ]);
         return true;
