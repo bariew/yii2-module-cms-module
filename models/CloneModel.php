@@ -72,7 +72,7 @@ class CloneModel extends Model
      */
     public function run()
     {
-        return $this->copy() && $this->clear() ;
+        return $this->copy() && $this->replace() ;
         
     }
 
@@ -147,10 +147,10 @@ class CloneModel extends Model
      * Replaces all new module classes content with empty template.
      * @return boolean
      */
-    private function clear()
+    private function replace()
     {
         $destination = Yii::getAlias($this->destination);
-        $migrationPath = preg_quote(DIRECTORY_SEPARATOR . 'migrations' . DIRECTORY_SEPARATOR, '/');
+        $destinationModuleName = $this->getDestinationModuleName();
         foreach (FileHelper::findFiles($destination) as $path) {
             if (!$this->replace && in_array($path, $this->keepFiles)) {
                 continue;
@@ -158,13 +158,17 @@ class CloneModel extends Model
             if (!preg_match('/^.*\.php$/', $path, $matches)) { // php file.
                 continue;
             } else if (preg_match('/^.*\W([A-Z]\w+)\.php$/', $path, $matches)) { // Class file.
-                $content = $this->createClassContent($matches[1], $path);
-            } else if (preg_match('/^.*'.$migrationPath.'\w+\.php$/', $path, $matches)) { // Class file.
-                $content = $this->updateFileContent($path);
+                file_put_contents($path, $this->createClassContent($matches[1], $path));
+            } else if (self::isMigration($path)) { // Class file.
+                file_put_contents($path, $this->updateFileContent($path));
+                if ($destinationModuleName) {
+                    $this->renameClassFile($path, function($className) use ($destinationModuleName){
+                        return $className . '_' . $destinationModuleName;
+                    });
+                }
             } else {
-                $content = $this->creteFileContent($path);
+                file_put_contents($path, $this->createFileContent($path));
             }
-            file_put_contents($path, $content);
         }
         return true;
     }
@@ -188,7 +192,7 @@ class CloneModel extends Model
         );
     }
 
-    protected function creteFileContent($path)
+    private function createFileContent($path)
     {
         $template = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR .
             'templates' .DIRECTORY_SEPARATOR . 'file_clone_template');
@@ -214,5 +218,40 @@ class CloneModel extends Model
     private function getOldNamespace()
     {
         return str_replace(['@', '/'], ['', '\\'], $this->source);
+    }
+
+    private function getDestinationModuleName()
+    {
+        return preg_match('/.*\/modules\/(.*\/)?([-\w]+)$/', $this->destination, $matches)
+            ? $matches[2] : null;
+    }
+
+    /**
+     * @param $path
+     * @return boolean
+     */
+    private static function isMigration($path)
+    {
+        $migrationPath = preg_quote(DIRECTORY_SEPARATOR . 'migrations' . DIRECTORY_SEPARATOR, '/');
+        return preg_match('/^.*'.$migrationPath.'\w+\.php$/', $path);
+    }
+
+    private function renameClassFile($path, $callback)
+    {
+        $pathArray = explode(DIRECTORY_SEPARATOR, $path);
+        $fileName = array_pop($pathArray);
+        $className = str_replace('.php', '', $fileName);
+        $newClassName = call_user_func($callback, $className);
+        $newPath = implode(DIRECTORY_SEPARATOR, $pathArray);
+        if (!$this->replace && file_exists($newPath)) {
+            return unlink($path);
+        }
+        array_push($pathArray, str_replace($className, $newClassName, $fileName)); //new filename
+        file_put_contents($path, str_replace(
+            "class $className",
+            "class $newClassName",
+            file_get_contents($path)
+        ));
+        rename($path, $newPath);
     }
 }
