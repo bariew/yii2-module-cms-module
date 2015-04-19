@@ -242,11 +242,11 @@ class CloneModel extends Model
         $fileName = array_pop($pathArray);
         $className = str_replace('.php', '', $fileName);
         $newClassName = call_user_func($callback, $className);
+        array_push($pathArray, str_replace($className, $newClassName, $fileName)); //new filename
         $newPath = implode(DIRECTORY_SEPARATOR, $pathArray);
         if (!$this->replace && file_exists($newPath)) {
             return unlink($path);
         }
-        array_push($pathArray, str_replace($className, $newClassName, $fileName)); //new filename
         file_put_contents($path, str_replace(
             "class $className",
             "class $newClassName",
