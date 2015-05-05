@@ -130,7 +130,7 @@ class CloneModel extends Model
             return false;
         }
         $destination = Yii::getAlias($this->destination);
-        if (!$this->replace) { // if replace is disabled we will skip existing files
+        if (!$this->replace && is_dir($destination)) { // if replace is disabled we will skip existing files
             $this->keepFiles = FileHelper::findFiles($destination);
         }
         FileHelper::copyDirectory($source, $destination, [
