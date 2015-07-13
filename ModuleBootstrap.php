@@ -44,6 +44,9 @@ class ModuleBootstrap implements BootstrapInterface
         if (Yii::$app->getRequest()->getIsAjax()) {
             return true;
         }
+        if ((!$module = Yii::$app->getModule('module')) || $module->params['enableMenu'] == false){
+            return true;
+        }
         try {
             $controller = new ItemController('item', \Yii::$app->getModule('module'));
             return $controller->runAction('menu');
