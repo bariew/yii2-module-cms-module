@@ -32,6 +32,8 @@ class CloneModel extends Model
      */
     public $replace = 0;
 
+    public $inheritContent = 0;
+
     /**
      * @var array files not to change.
      */
@@ -50,7 +52,7 @@ class CloneModel extends Model
         return [
             [['source', 'destination'], 'required'],
             ['source', 'in', 'range' => self::aliasList()],
-            ['replace', 'in', 'range' => array_keys(self::replaceList())],
+            [['inheritContent', 'replace'], 'boolean'],
         ];
     }
 
@@ -62,6 +64,7 @@ class CloneModel extends Model
         return [
             'source'  => Yii::t('modules/module', 'Clone source'),
             'destination'   => Yii::t('modules/module', 'Clone destination'),
+            'inheritContent'=> Yii::t('modules/module', 'Inherit parent php content'),
             'replace'       => Yii::t('modules/module', 'Replace existing files'),
         ];
     }
@@ -74,18 +77,6 @@ class CloneModel extends Model
     {
         return $this->copy() && $this->replace() ;
         
-    }
-
-    /**
-     * Available values for 'replace' attribute.
-     * @return array
-     */
-    public static function replaceList()
-    {
-        return [
-            0 => Yii::t('modules/module', 'No'),
-            1 => Yii::t('modules/module', 'Yes'),
-        ];
     }
 
     /**
@@ -166,8 +157,10 @@ class CloneModel extends Model
                         return $className . '_' . $destinationModuleName;
                     });
                 }
-            } else {
+            } else if ($this->inheritContent) {
                 file_put_contents($path, $this->createFileContent($path));
+            } else {
+                file_put_contents($path, $this->updateFileContent($path));
             }
         }
         return true;

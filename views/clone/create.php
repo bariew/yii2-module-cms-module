@@ -44,7 +44,8 @@ $this->title = Yii::t('modules/module', 'Clone module');
                 'minLength' => 1,
             ],
         ]); ?>
-        <?= $form->field($model, 'replace')->dropDownList($model::replaceList()); ?>
+        <?= $form->field($model, 'inheritContent')->checkbox(); ?>
+        <?= $form->field($model, 'replace')->checkbox(); ?>
         <div class="form-group">
             <?php echo Html::submitButton(Yii::t('modules/module', 'Save'), ['class' => 'btn btn-primary']) ?>
         </div>
