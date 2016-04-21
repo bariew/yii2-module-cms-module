@@ -18,8 +18,5 @@
         "psr-4": {
             "bariew\\moduleModule\\": ""
         }
-    },
-    "extra": {
-        "bootstrap": "bariew\\moduleModule\\ModuleBootstrap"
     }
 }
